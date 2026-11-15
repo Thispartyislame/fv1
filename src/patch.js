@@ -745,7 +745,7 @@ const PRESETS = {
   },
   'Echo': {
     nodes: [N('n1', 'input', 10, 20), N('n2', 'delay', 230, 10, { time: 600, fb: 0.55, damp: 3500 }), N('n3', 'xfade', 450, 20), N('n4', 'output', 670, 20),
-      N('p0', 'pot', 10, 230, { pot: 0 }), N('p1', 'pot', 10, 320, { pot: 1 }), N('p2', 'pot', 450, 230, { pot: 2 })],
+      N('p0', 'pot', 10, 230, { pot: 0 }), N('p1', 'pot', 10, 420, { pot: 1 }), N('p2', 'pot', 450, 230, { pot: 2 })],
     edges: [{ a: 'n1.l', b: 'n2.in' }, { a: 'n1.l', b: 'n3.a' }, { a: 'n2.out', b: 'n3.b' }, { a: 'n3.out', b: 'n4.l' },
       { a: 'p0.out', b: 'n2.time' }, { a: 'p1.out', b: 'n2.fb' }, { a: 'p2.out', b: 'n3.ctl' }],
   },

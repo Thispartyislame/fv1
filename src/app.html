@@ -30,18 +30,18 @@ header button{white-space:nowrap}
 #emuNote{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #rig{display:flex;flex-wrap:wrap;gap:8px 18px;padding:8px 14px;background:var(--panel);border-bottom:1px solid var(--line);align-items:flex-start}
 .grp{display:flex;flex-direction:column;gap:5px}
-.grp h3{margin:0;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);font-weight:600}
+.grp h2{margin:0;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);font-weight:600}
 .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .meter{width:110px;height:8px;background:#0c0d10;border-radius:4px;overflow:hidden;position:relative}
 .meter i{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#3fbf6a,#d4d94a 75%,#ff5d5d)}
 .led{width:9px;height:9px;border-radius:50%;background:#3a1a1a;display:inline-block}
-.led.on{background:var(--red);box-shadow:0 0 6px var(--red)}
+.led.on{background:var(--red);outline:1px solid #ffb3b3}
 .pots{display:flex;gap:12px}
-.pots label{display:flex;flex-direction:column;align-items:center;font-size:10px;color:var(--dim);gap:2px}
+.pots label{display:flex;flex-direction:column;align-items:center;font-size:11px;color:var(--dim);gap:2px}
 .pots input{width:90px}
 #main{flex:1;display:grid;grid-template-columns:150px 1fr 370px;min-height:0}
 #palette{background:var(--panel);border-right:1px solid var(--line);padding:10px;display:flex;flex-direction:column;gap:5px;overflow:auto}
-#palette h3{margin:6px 0 2px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--dim)}
+#palette h2{margin:6px 0 2px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--dim)}
 #palette button{text-align:left;border-left:4px solid var(--c,#888)}
 #canvas{position:relative;overflow:auto;background:
   radial-gradient(circle,#2a2f38 1px,transparent 1px) 0 0/24px 24px, var(--bg)}
@@ -94,7 +94,7 @@ footer{display:flex;gap:18px;align-items:center;padding:6px 14px;border-top:1px 
 #loopbar{width:140px;height:8px;background:#0c0d10;border-radius:4px;overflow:hidden;position:relative}
 #loopbar i{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--blue)}
 #loopbar.rec i{background:var(--red)}
-h4{margin:6px 0 2px;font-size:12px;color:var(--amber)}
+h3{margin:6px 0 2px;font-size:12px;color:var(--amber)}
 .tab p{margin:4px 0}
 .lvl{height:4px;background:#0006;margin:0}.lvl i{display:block;height:100%;width:0;background:#3ddc84}.lvl i.hot{background:#ff5d5d}
 .dot.tgt{background:#3ddc84;border-color:#3ddc84;box-shadow:0 0 0 4px rgba(61,220,132,.3);transform:scale(1.35)}
@@ -124,7 +124,7 @@ h4{margin:6px 0 2px;font-size:12px;color:var(--amber)}
 
 <section id="rig">
   <div class="grp">
-    <h3>Audio engine</h3>
+    <h2>Audio engine</h2>
     <div class="row">
       <button id="btnPower" class="primary">Start audio</button>
       <label><input type="checkbox" id="chkBypass"> Bypass FX</label>
@@ -137,7 +137,7 @@ h4{margin:6px 0 2px;font-size:12px;color:var(--amber)}
     </div>
   </div>
   <div class="grp">
-    <h3>Live input (guitar / interface)</h3>
+    <h2>Live input (guitar / interface)</h2>
     <div class="row">
       <select id="devSel" style="max-width:190px"><option value="">Default input</option></select>
       <button id="btnMic">Turn on</button>
@@ -150,7 +150,7 @@ h4{margin:6px 0 2px;font-size:12px;color:var(--amber)}
     <div class="note" id="inStat">Input off.</div>
   </div>
   <div class="grp">
-    <h3>Looper <span id="loopState" class="note"></span></h3>
+    <h2>Looper <span id="loopState" class="note"></span></h2>
     <div class="row">
       <button id="btnRec" class="rec">● Rec</button>
       <button id="btnPlay">▶ Play</button>
@@ -169,7 +169,7 @@ h4{margin:6px 0 2px;font-size:12px;color:var(--amber)}
     </div>
   </div>
   <div class="grp">
-    <h3>Pots (what the three pedal knobs do)</h3>
+    <h2>Pots (what the three pedal knobs do)</h2>
     <div class="pots">
       <label>POT0<input type="range" class="pot" data-i="0" min="0" max="1" step="0.001" value="0.5"></label>
       <label>POT1<input type="range" class="pot" data-i="1" min="0" max="1" step="0.001" value="0.5"></label>
@@ -201,20 +201,20 @@ h4{margin:6px 0 2px;font-size:12px;color:var(--amber)}
     </div>
 
     <div class="tab" id="tab-chip">
-      <h4>Pedal bank (8 programs on one EEPROM)</h4>
+      <h3>Pedal bank (8 programs on one EEPROM)</h3>
       <p class="note">The FV-1 chooses one of 8 programs with its S0–S2 pins (usually a rotary switch). Store the current patch in a slot, then write the bank.</p>
       <div id="slots"></div>
       <div class="row">
         <button id="btnAudEd" title="Switch the live sound back to the patch in the editor (with a short crossfade)">Audition editor patch</button>
         <button id="btnLegend" title="Text list of what each knob does in every slot, for labeling the pedal">Knob legend (.txt)</button>
       </div>
-      <h4>Make files for a programmer</h4>
+      <h3>Make files for a programmer</h3>
       <div class="row">
         <button id="btnHex" class="primary">Download .hex</button>
         <button id="btnBin">Download .bin</button>
       </div>
       <p class="note" id="bankInfo"></p>
-      <h4>Write straight to the chip (Arduino programmer)</h4>
+      <h3>Write straight to the chip (Arduino programmer)</h3>
       <p class="note">Flash <code>fv1-eeprom-programmer.ino</code> to an Arduino, wire the 24LC32A to it, then connect here. Needs Chrome or Edge.</p>
       <div class="row">
         <button id="btnSerial">Connect programmer</button>
@@ -227,19 +227,19 @@ h4{margin:6px 0 2px;font-size:12px;color:var(--amber)}
     </div>
 
     <div class="tab" id="tab-help">
-      <h4>How it works</h4>
+      <h3>How it works</h3>
       <p>Drag blocks from the left, wire <b>outputs</b> (right dots) to <b>inputs</b> (left dots), and turn the knobs on each block. The program on the right is real FV-1 assembly; an emulator runs the exact same machine code you will burn.</p>
       <p><b>Blue</b> cables carry audio, <b>orange</b> cables carry control signals (pots, LFOs). Click a cable to delete it, or drag it off an input.</p>
-      <h4>Hearing it</h4>
+      <h3>Hearing it</h3>
       <p>Press <b>Start audio</b>. Then either turn on your guitar input, press <b>Demo riff</b>, load a recording, or record a loop. The looper holds your <i>dry</i> loop and the effect runs live on top, so you can keep changing the patch while it plays. Use headphones when monitoring a live input.</p>
-      <h4>Limits that matter on the real chip</h4>
+      <h3>Limits that matter on the real chip</h3>
       <p>128 instructions, 32 working registers, 32768 samples (about 1 second) of delay RAM, 3 pots, 2 sine LFOs, 32 kHz sample rate. The status bar shows how much you have used. The looper in this app is for auditioning only; the chip itself can only loop about a second.</p>
       <p><b>Editing aids:</b> Ctrl+Z / Ctrl+Y (or ↶ ↷) undo and redo graph edits. The thin bar under each block's title is its output level; red means it hit the chip's limit. <b>A/B</b> keeps two versions of your patch and flips between them while a loop plays. <b>Render WAV</b> runs the current loop through the patch offline. <b>Optimize code</b> (Code tab) merges redundant instructions and shares registers with the same sound. On the Chip tab, <b>Audition</b> plays a stored slot with a short crossfade (like turning the program switch) and <b>Knob legend</b> writes a text list of what each knob does per slot. The LFO has sine, triangle, square, soft-square and saw shapes; Pots have a taper and min/max.</p>
       <p><b>Importing:</b> “Import” in the header opens SpinASM text (.spn/.asm/.txt) in hand-edit mode, or a chip image (.hex/.bin) which is disassembled into the 8 bank slots. On the Chip tab, “Read chip → bank” does the same straight from your EEPROM. Imported code uses plain numeric delay addresses, so the RAM meter shows 0.</p>
       <p><b>Dynamics &amp; filters:</b> Envelope turns playing level into a control signal (plug into Resonant Filter “freq” for auto-wah). Noise Gate goes before high-gain blocks. Compressor uses LOG/EXP gain computing. Resonant Filter is a state-variable filter; a Pot on “freq” makes a wah. Metal Dist is modeled on the <i>character</i> of a Fromel-modded Metal Zone (more gain, smoother clipping, tamed fizz, usable EQ with a sweepable mid), not its circuit. Hover over any dot or setting for a hint; while dragging a cable, valid drop targets glow green.</p>
       <p><b>*</b> “rate*” and “pitch*” inputs (pot-controlled LFO speed / pitch) write the LFO rate registers. The emulator follows the model used by the SpinCAD simulator; confirm the sweep range on real hardware. The pitch input sweeps the shift linearly between −N and +N semitones (it is not centred on unity).</p>
       <p>Pitch shifting uses a ramp LFO and two crossfaded read heads. Short windows react fast but warble; long windows are smooth but add latency. Only 2 ramp LFOs exist, so at most 2 Pitch Shift blocks.</p>
-      <h4>Before you burn a chip</h4>
+      <h3>Before you burn a chip</h3>
       <p>The assembler is checked word-for-word against the open-source <code>asfv1</code> assembler, but the emulator is not bit-exact with the silicon. Download the <code>.spn</code> and assemble it in Spin's own SpinASM at least once, and always test the first chip on the bench.</p>
     </div>
   </aside>
@@ -347,7 +347,7 @@ function buildPalette() {
   const p = $('#palette'); p.innerHTML = '';
   const groups = [['Signal', ['input', 'output']], ['Controls', ['pot', 'lfo', 'smooth']], ['Effects', ['delay', 'reverb', 'chorus', 'pitch', 'phaser', 'ringmod', 'crush', 'drive', 'metal']], ['Filters & Dynamics', ['filter', 'svf', 'env', 'gate', 'comp']], ['Mix', ['gain', 'mixer', 'xfade']]];
   groups.forEach(([title, types]) => {
-    const h = document.createElement('h3'); h.textContent = title; p.appendChild(h);
+    const h = document.createElement('h2'); h.textContent = title; p.appendChild(h);
     types.forEach((t) => {
       const b = document.createElement('button'); b.textContent = NT[t].title; b.style.setProperty('--c', NT[t].color); b.dataset.type = t; b.title = FV1PATCH.DESC[t] || '';
       b.onclick = () => addNode(t); p.appendChild(b);

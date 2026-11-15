@@ -50,9 +50,10 @@ function fakeProgrammer() {                               // runs in the page be
   for (const name of Object.keys(P.PRESETS)) {
     await page.selectOption('#preset', name); await page.waitForTimeout(120);
     const n = +(await text('#sI')), cables = await page.$$eval('#cables path:not(.hit)', (p) => p.length);
-    if ((await text('#errs')) || n < 1 || n > 128 || cables !== P.PRESETS[name].edges.length) bad.push(name);
+    const overlaps = await page.$$eval('.node', (els) => { const b = els.map((e) => [e.offsetLeft, e.offsetTop, e.offsetWidth, e.offsetHeight]); let k = 0; for (let i = 0; i < b.length; i++) for (let j = i + 1; j < b.length; j++) if (b[i][0] < b[j][0] + b[j][2] && b[j][0] < b[i][0] + b[i][2] && b[i][1] < b[j][1] + b[j][3] && b[j][1] < b[i][1] + b[i][3]) k++; return k; });
+    if ((await text('#errs')) || n < 1 || n > 128 || cables !== P.PRESETS[name].edges.length || overlaps) bad.push(name);
   }
-  ok(!bad.length, 'every preset loads, draws its cables and assembles', bad.join(', '));
+  ok(!bad.length, 'every preset loads, draws its cables without overlapping blocks, and assembles', bad.join(', '));
 
   await page.selectOption('#preset', 'Echo'); await page.waitForTimeout(120);
   await page.evaluate(() => Promise.all([window.__fv1.startAudio(), window.__fv1.startAudio()]));
