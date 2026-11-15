@@ -1,0 +1,63 @@
+; assembler cross-check
+equ  kap 0.6
+equ  lpf 0.1234
+mem  d1 8000
+mem  ap1 142
+mem  chor 2200
+skp run,setupdone
+wlds sin0,12,100
+wlds sin1,50,0.5
+setupdone:
+rdax adcl,1.0
+rdax adcr,-0.25
+rdax pot0,1
+wrax reg0,0
+rda  d1#,0.5
+rda  d1+300,1.0
+rda  ap1#,kap
+wrap ap1,-kap
+wra  d1,0
+wra  d1^,1.9
+rdfx reg1,lpf
+wrax reg1,1.0
+wrhx reg2,-1.0
+wrlx reg2,0.3
+ldax reg3
+maxx reg4,0.5
+absa
+mulx pot1
+sof  0.5,0.25
+sof  -1.5,-0.9
+sof  1.999,0
+exp  1.0,0.0
+log  0.5,0.0
+and  $ffff00
+or   %101010101010101010101010
+xor  0x00ff00
+clr
+not
+nop
+cho rda,sin0,sin|reg|compc,chor+10
+cho rda,sin0,sin,chor+11
+cho rdal,sin1
+cho sof,sin1,compc,0.5
+rmpa 1.0
+rmpa 0.75
+rdax addr_ptr,1
+wrax addr_ptr,0
+rdax sin0_rate,0.3
+wrax dacl,1.0
+wrax dacr,0
+skp zro|gez,fwd
+skp neg,2
+nop
+nop
+fwd:
+jam 0
+wldr rmp0,-8192,4096
+wldr rmp1,16384,512
+rda 0,1.0
+rda 32767,-1.0
+rda -1,0.5
+rdax reg31,-2.0
+rdax reg31,1.99993896484375

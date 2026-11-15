@@ -1,0 +1,2550 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FV-1 Studio</title>
+<style>
+:root{
+  --bg:#14161a; --panel:#1c1f25; --panel2:#232830; --line:#2e343e; --text:#e6e8ec; --dim:#8b93a1;
+  --amber:#ffb454; --blue:#4aa3ff; --orange:#ff9f43; --green:#6fdc8c; --red:#ff5d5d;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font:13px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+button,select,input{font:inherit;color:inherit}
+button{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer}
+button:hover{border-color:#566}
+button:disabled{opacity:.4;cursor:default}
+button.primary{background:var(--amber);color:#1a1200;border-color:var(--amber);font-weight:600}
+button.rec{background:#5a1d1d;border-color:#8a2e2e}
+button.rec.on{background:var(--red);color:#fff}
+button.on{border-color:var(--amber);color:var(--amber)}
+select,input[type=text]{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:4px 6px}
+input[type=range]{accent-color:var(--amber);vertical-align:middle}
+header{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{font-size:16px;margin:0 10px 0 0;letter-spacing:.5px}
+header h1 b{color:var(--amber)}
+header .sp{flex:1}
+#rig{display:flex;flex-wrap:wrap;gap:8px 18px;padding:8px 14px;background:var(--panel);border-bottom:1px solid var(--line);align-items:flex-start}
+.grp{display:flex;flex-direction:column;gap:5px}
+.grp h3{margin:0;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);font-weight:600}
+.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.meter{width:110px;height:8px;background:#0c0d10;border-radius:4px;overflow:hidden;position:relative}
+.meter i{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#3fbf6a,#d4d94a 75%,#ff5d5d)}
+.led{width:9px;height:9px;border-radius:50%;background:#3a1a1a;display:inline-block}
+.led.on{background:var(--red);box-shadow:0 0 6px var(--red)}
+.pots{display:flex;gap:12px}
+.pots label{display:flex;flex-direction:column;align-items:center;font-size:10px;color:var(--dim);gap:2px}
+.pots input{width:90px}
+#main{flex:1;display:grid;grid-template-columns:150px 1fr 370px;min-height:0}
+#palette{background:var(--panel);border-right:1px solid var(--line);padding:10px;display:flex;flex-direction:column;gap:5px;overflow:auto}
+#palette h3{margin:6px 0 2px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--dim)}
+#palette button{text-align:left;border-left:4px solid var(--c,#888)}
+#canvas{position:relative;overflow:auto;background:
+  radial-gradient(circle,#2a2f38 1px,transparent 1px) 0 0/24px 24px, var(--bg)}
+#world{position:relative;width:2400px;height:1400px}
+#cables{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#cables path{fill:none;stroke-width:3;pointer-events:stroke}
+#cables path.hit{stroke:transparent;stroke-width:14;cursor:pointer}
+#cables path.hit:hover + path{stroke-width:5}
+.node{position:absolute;width:210px;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 14px #0008;user-select:none}
+.nhead{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-bottom:2px solid var(--c);cursor:grab;font-weight:600;border-radius:7px 7px 0 0;background:var(--panel2)}
+.nhead button{padding:0 6px;border:none;background:none;color:var(--dim);font-size:14px}
+.nhead button:hover{color:var(--red)}
+.ports{display:flex;justify-content:space-between;padding:6px 0 2px}
+.pcol{display:flex;flex-direction:column;gap:4px}
+.pin{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dim)}
+.pin.out{flex-direction:row-reverse}
+.dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--pc);background:var(--panel);cursor:crosshair;margin-left:-7px}
+.pin.out .dot{margin-left:0;margin-right:-7px}
+.dot.used{background:var(--pc)}
+.dot:hover{transform:scale(1.35)}
+.params{padding:4px 8px 8px;display:flex;flex-direction:column;gap:5px}
+.prow{display:grid;grid-template-columns:78px 1fr 52px;gap:4px;align-items:center;font-size:11px}
+.prow label{color:var(--dim)}
+.prow input[type=range]{width:100%}
+.prow select{grid-column:2/4;width:100%}
+.prow span{text-align:right;font-variant-numeric:tabular-nums}
+#side{background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.tabs{display:flex;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;border:none;border-radius:0;background:none;padding:8px;color:var(--dim)}
+.tabs button.on{color:var(--amber);box-shadow:inset 0 -2px var(--amber)}
+.tab{display:none;flex:1;min-height:0;overflow:auto;padding:10px;flex-direction:column;gap:8px}
+.tab.on{display:flex}
+#code{flex:1;min-height:240px;width:100%;resize:none;background:#0e1013;color:#cfe3ff;border:1px solid var(--line);border-radius:6px;padding:8px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;white-space:pre;tab-size:2}
+#errs{color:var(--red);font:12px ui-monospace,Menlo,monospace;white-space:pre-wrap}
+#warns{color:#e8c36a;font-size:12px}
+.slot{display:grid;grid-template-columns:20px 1fr;gap:6px;align-items:center;padding:6px;border:1px solid var(--line);border-radius:6px}
+.slot .acts,.slot small{grid-column:2}
+.slot.sel{border-color:var(--amber)}
+.slot small{color:var(--dim)}
+.slot .acts{display:flex;gap:4px}
+.slot .acts button{padding:2px 7px;font-size:11px}
+.note{color:var(--dim);font-size:12px}
+.note code,.tab code{background:#0e1013;padding:1px 4px;border-radius:3px}
+#log{background:#0e1013;border:1px solid var(--line);border-radius:6px;padding:6px;font:11px/1.4 ui-monospace,Menlo,monospace;min-height:90px;max-height:160px;overflow:auto;white-space:pre-wrap}
+footer{display:flex;gap:18px;align-items:center;padding:6px 14px;border-top:1px solid var(--line);background:var(--panel);font-size:12px}
+.bar{display:inline-block;width:90px;height:7px;background:#0c0d10;border-radius:4px;overflow:hidden;vertical-align:middle;margin:0 6px}
+.bar i{display:block;height:100%;background:var(--green)}
+.bar i.hot{background:var(--amber)} .bar i.over{background:var(--red)}
+#banner{display:none;background:#3a2b10;color:#ffd48a;padding:6px 14px;border-bottom:1px solid var(--line)}
+#loopbar{width:140px;height:8px;background:#0c0d10;border-radius:4px;overflow:hidden;position:relative}
+#loopbar i{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--blue)}
+#loopbar.rec i{background:var(--red)}
+h4{margin:6px 0 2px;font-size:12px;color:var(--amber)}
+.tab p{margin:4px 0}
+.lvl{height:4px;background:#0006;margin:0}.lvl i{display:block;height:100%;width:0;background:#3ddc84}.lvl i.hot{background:#ff5d5d}
+.dot.tgt{background:#3ddc84;border-color:#3ddc84;box-shadow:0 0 0 4px rgba(61,220,132,.3);transform:scale(1.35)}
+.dot.tgt2{box-shadow:0 0 0 4px rgba(255,190,60,.35);transform:scale(1.2)}
+#tip{position:fixed;z-index:50;max-width:300px;background:#10141c;color:#e8ecf3;border:1px solid #3a4560;border-radius:6px;padding:7px 9px;font-size:12px;line-height:1.35;white-space:pre-line;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.5);display:none}
+#tip.hint{border-color:#ffd166}
+</style>
+</head>
+<body>
+<div id="tip"></div>
+<header>
+  <h1>FV-1 <b>Studio</b></h1>
+  <select id="preset" title="Load a starting patch"></select>
+  <button id="btnUndo2" title="Undo (Ctrl+Z)">↶</button><button id="btnRedo2" title="Redo (Ctrl+Y)">↷</button>
+  <button id="btnAB" title="A/B compare: flip between two versions of your patch while a loop plays. Click to switch; the first time, B starts as a copy of A.">Editing A</button>
+  <button id="btnABcopy" title="Copy what you are editing over the other slot (A→B or B→A)">Copy → B</button>
+  <button id="btnFit" title="Zoom the editor so every block is visible (Ctrl+mouse wheel also zooms)">Fit view</button>
+  <button id="btnSavePatch">Save patch file</button>
+  <button id="btnOpenPatch">Open patch file</button>
+  <input type="file" id="filePatch" accept=".json" hidden>
+  <button id="btnImport" title="Import an existing FV-1 program: SpinASM source (.spn/.asm/.txt) or a chip image (.hex/.bin)">Import .spn / .hex / .bin</button>
+  <input type="file" id="fileImport" accept=".spn,.asm,.txt,.hex,.bin,.ihx" hidden>
+  <span class="sp"></span>
+  <span class="note" id="emuNote">Emulator runs your patch at 32 kHz using the same machine code that goes on the chip.</span>
+</header>
+<div id="banner"></div>
+
+<section id="rig">
+  <div class="grp">
+    <h3>Audio engine</h3>
+    <div class="row">
+      <button id="btnPower" class="primary">Start audio</button>
+      <label><input type="checkbox" id="chkBypass"> Bypass FX</label>
+      <label>Out <input type="range" id="outVol" min="0" max="1" step="0.01" value="0.7"></label>
+    </div>
+    <div class="row">
+      <span class="note">in</span><div class="meter"><i id="mIn"></i></div>
+      <span class="note">out</span><div class="meter"><i id="mOut"></i></div>
+      <span class="led" id="clipLed" title="Clipping (FV-1 converters clip at 0 dBFS)"></span>
+    </div>
+  </div>
+  <div class="grp">
+    <h3>Live input (guitar / interface)</h3>
+    <div class="row">
+      <select id="devSel" style="max-width:190px"><option value="">Default input</option></select>
+      <button id="btnMic">Turn on</button>
+      <select id="chanSel" title="Which interface input carries your guitar. Auto picks the louder one."><option value="auto">Auto channel</option><option value="L">Input 1 (left)</option><option value="R">Input 2 (right)</option><option value="B">Both summed</option></select>
+    </div>
+    <div class="row">
+      <label title="Digital boost applied before the effects. Raise it if the input meter stays low. Better: raise the gain knob on your interface first.">Trim <input type="range" id="inGain" min="-12" max="36" step="1" value="0"> <span id="inGainV" class="note">0 dB</span></label>
+      <label title="Unchecking this mutes the dry live signal going into the effects (only the loop is processed)."><input type="checkbox" id="chkLive" checked> Live signal into FX</label>
+    </div>
+    <div class="note" id="inStat">Input off.</div>
+  </div>
+  <div class="grp">
+    <h3>Looper <span id="loopState" class="note"></span></h3>
+    <div class="row">
+      <button id="btnRec" class="rec">● Rec</button>
+      <button id="btnPlay">▶ Play</button>
+      <button id="btnOver">Overdub</button>
+      <button id="btnStop">■ Stop</button>
+      <button id="btnUndo">Undo</button>
+      <button id="btnClear">Clear</button>
+    </div>
+    <div class="row">
+      <button id="btnLoad">Load audio file…</button>
+      <input type="file" id="fileAudio" accept="audio/*" hidden>
+      <button id="btnDemo">Demo riff</button>
+      <button id="btnRender" title="Run the loop through the current patch offline and save the result (plus a reverb/echo tail) as a WAV file">Render WAV</button>
+      <label>Loop <input type="range" id="loopVol" min="0" max="1.5" step="0.01" value="1"></label>
+      <div id="loopbar"><i></i></div><span class="note" id="loopTime"></span>
+    </div>
+  </div>
+  <div class="grp">
+    <h3>Pots (what the three pedal knobs do)</h3>
+    <div class="pots">
+      <label>POT0<input type="range" class="pot" data-i="0" min="0" max="1" step="0.001" value="0.5"></label>
+      <label>POT1<input type="range" class="pot" data-i="1" min="0" max="1" step="0.001" value="0.5"></label>
+      <label>POT2<input type="range" class="pot" data-i="2" min="0" max="1" step="0.001" value="0.5"></label>
+    </div>
+  </div>
+</section>
+
+<div id="main">
+  <aside id="palette"></aside>
+  <div id="canvas"><div id="world"><svg id="cables"></svg></div></div>
+  <aside id="side">
+    <div class="tabs">
+      <button data-tab="code" class="on">Code</button>
+      <button data-tab="chip">Chip</button>
+      <button data-tab="help">Help</button>
+    </div>
+
+    <div class="tab on" id="tab-code">
+      <div class="row">
+        <button id="btnHand">Edit code by hand</button>
+        <button id="btnCopy">Copy</button>
+        <button id="btnSpn">Download .spn</button>
+      </div>
+      <div class="row"><label title="Merge redundant instructions and share registers whose lifetimes do not overlap. Sound is identical."><input type="checkbox" id="chkOpt" checked> Optimize code</label><span class="note" id="optNote"></span></div>
+      <textarea id="code" spellcheck="false" readonly></textarea>
+      <div id="errs"></div>
+      <div id="warns"></div>
+    </div>
+
+    <div class="tab" id="tab-chip">
+      <h4>Pedal bank (8 programs on one EEPROM)</h4>
+      <p class="note">The FV-1 chooses one of 8 programs with its S0–S2 pins (usually a rotary switch). Store the current patch in a slot, then write the bank.</p>
+      <div id="slots"></div>
+      <div class="row">
+        <button id="btnAudEd" title="Switch the live sound back to the patch in the editor (with a short crossfade)">Audition editor patch</button>
+        <button id="btnLegend" title="Text list of what each knob does in every slot, for labeling the pedal">Knob legend (.txt)</button>
+      </div>
+      <h4>Make files for a programmer</h4>
+      <div class="row">
+        <button id="btnHex" class="primary">Download .hex</button>
+        <button id="btnBin">Download .bin</button>
+      </div>
+      <p class="note" id="bankInfo"></p>
+      <h4>Write straight to the chip (Arduino programmer)</h4>
+      <p class="note">Flash <code>fv1-eeprom-programmer.ino</code> to an Arduino, wire the 24LC32A to it, then connect here. Needs Chrome or Edge.</p>
+      <div class="row">
+        <button id="btnSerial">Connect programmer</button>
+        <button id="btnWrite" disabled>Write bank</button>
+        <button id="btnVerify" disabled>Verify</button>
+        <button id="btnRead" disabled>Read chip → .bin</button>
+        <button id="btnReadBank" disabled title="Read the EEPROM and turn each program into editable code in the bank">Read chip → bank</button>
+      </div>
+      <div id="log"></div>
+    </div>
+
+    <div class="tab" id="tab-help">
+      <h4>How it works</h4>
+      <p>Drag blocks from the left, wire <b>outputs</b> (right dots) to <b>inputs</b> (left dots), and turn the knobs on each block. The program on the right is real FV-1 assembly; an emulator runs the exact same machine code you will burn.</p>
+      <p><b>Blue</b> cables carry audio, <b>orange</b> cables carry control signals (pots, LFOs). Click a cable to delete it, or drag it off an input.</p>
+      <h4>Hearing it</h4>
+      <p>Press <b>Start audio</b>. Then either turn on your guitar input, press <b>Demo riff</b>, load a recording, or record a loop. The looper holds your <i>dry</i> loop and the effect runs live on top, so you can keep changing the patch while it plays. Use headphones when monitoring a live input.</p>
+      <h4>Limits that matter on the real chip</h4>
+      <p>128 instructions, 32 working registers, 32768 samples (about 1 second) of delay RAM, 3 pots, 2 sine LFOs, 32 kHz sample rate. The status bar shows how much you have used. The looper in this app is for auditioning only; the chip itself can only loop about a second.</p>
+      <p><b>Editing aids:</b> Ctrl+Z / Ctrl+Y (or ↶ ↷) undo and redo graph edits. The thin bar under each block's title is its output level; red means it hit the chip's limit. <b>A/B</b> keeps two versions of your patch and flips between them while a loop plays. <b>Render WAV</b> runs the current loop through the patch offline. <b>Optimize code</b> (Code tab) merges redundant instructions and shares registers with the same sound. On the Chip tab, <b>Audition</b> plays a stored slot with a short crossfade (like turning the program switch) and <b>Knob legend</b> writes a text list of what each knob does per slot. Ring Mod and Bit Crusher are new effects; the LFO now has sine, triangle, square, soft-square and saw shapes; Pots have taper and min/max.</p>
+      <p><b>Importing:</b> “Import” in the header opens SpinASM text (.spn/.asm/.txt) in hand-edit mode, or a chip image (.hex/.bin) which is disassembled into the 8 bank slots. On the Chip tab, “Read chip → bank” does the same straight from your EEPROM. Imported code uses plain numeric delay addresses, so the RAM meter shows 0.</p>
+      <p><b>Dynamics &amp; filters:</b> Envelope turns playing level into a control signal (plug into Resonant Filter “freq” for auto-wah). Noise Gate goes before high-gain blocks. Compressor uses LOG/EXP gain computing. Resonant Filter is a state-variable filter; a Pot on “freq” makes a wah. Metal Dist is modeled on the <i>character</i> of a Fromel-modded Metal Zone (more gain, smoother clipping, tamed fizz, usable EQ with a sweepable mid), not its circuit. Hover over any dot or setting for a hint; while dragging a cable, valid drop targets glow green.</p>
+      <p><b>*</b> “rate*” and “pitch*” inputs (pot-controlled LFO speed / pitch) write the LFO rate registers. The emulator follows the model used by the SpinCAD simulator; confirm the sweep range on real hardware. The pitch input sweeps the shift linearly between −N and +N semitones (it is not centred on unity).</p>
+      <p>Pitch shifting uses a ramp LFO and two crossfaded read heads. Short windows react fast but warble; long windows are smooth but add latency. Only 2 ramp LFOs exist, so at most 2 Pitch Shift blocks.</p>
+      <h4>Before you burn a chip</h4>
+      <p>The assembler is checked word-for-word against the open-source <code>asfv1</code> assembler, but the emulator is not bit-exact with the silicon. Download the <code>.spn</code> and assemble it in Spin's own SpinASM at least once, and always test the first chip on the bench.</p>
+    </div>
+  </aside>
+</div>
+
+<footer>
+  <span>Instructions <b id="sI">0</b>/128 <span class="bar"><i id="bI"></i></span></span>
+  <span>Delay RAM <b id="sM">0</b>/32768 <span class="bar"><i id="bM"></i></span></span>
+  <span>Registers <b id="sR">0</b>/32</span>
+  <span id="statMsg" class="note"></span>
+</footer>
+
+<script type="text/plain" id="emu-src">/* FV-1 emulator core. Executes assembled 32-bit machine words, one program pass per sample.
+ * Floating point (not bit-exact): ACC/registers saturate at about +/-1 like the real chip.
+ * Runs inside an AudioWorklet and in Node for tests. */
+const S16 = (v) => ((v & 0x8000) ? v - 0x10000 : v);
+class FV1Emu {
+  constructor(fs) {
+    this.fs = fs || 32000;
+    this.N = 32768;
+    this.mem = new Float32Array(this.N);
+    this.reg = new Float64Array(64);
+    this.wp = 0;
+    this.prog = [];
+    this.run = false;
+    this.sinPhase = [0, 0];
+    this.sinK = [0, 0];       // Kf (0..511)
+    this.sinAmp = [0, 0];     // WLDS amplitude (swing is +/- amp/2 samples)
+    this.rampPos = [0, 0];    // ramp LFO positions, units of 1/16384 sample
+    this.warned = {};
+    this.onwarn = null;
+    this.acc = 0; this.pacc = 0; this.lr = 0;
+    this.load(new Uint32Array(128).fill(0x11));
+  }
+  static s(v, bits) { return (v & (1 << (bits - 1))) ? v - (1 << bits) : v; }
+  load(words) {
+    const S = FV1Emu.s, prog = [];
+    for (let i = 0; i < words.length; i++) {
+      const w = words[i] >>> 0, op = w & 31;
+      const o = { op };
+      switch (op) {
+        case 0: case 2: case 3: o.addr = (w >>> 5) & 0x7fff; o.c = S((w >>> 21) & 0x7ff, 11) / 512; break;
+        case 1: o.c = S((w >>> 21) & 0x7ff, 11) / 512; break;
+        case 4: case 5: case 6: case 7: case 8: case 9:
+          o.r = (w >>> 5) & 63; o.c = S((w >>> 16) & 0xffff, 16) / 16384; break;
+        case 10: o.r = (w >>> 5) & 63; break;
+        case 11: case 12: case 13: o.c = S((w >>> 16) & 0xffff, 16) / 16384; o.d = S((w >>> 5) & 0x7ff, 11) / 1024; break;
+        case 14: case 15: case 16: o.m = (w >>> 8) & 0xffffff; break;
+        case 17: o.cond = (w >>> 27) & 31; o.n = (w >>> 21) & 63; break;
+        case 18:
+          if ((w >>> 30) & 1) { o.ramp = true; o.lfo = (w >>> 29) & 1; o.K = S((w >>> 13) & 0xffff, 16); o.sel = (w >>> 5) & 3; }
+          else { o.lfo = (w >>> 29) & 1; o.freq = (w >>> 20) & 0x1ff; o.amp = (w >>> 5) & 0x7fff; }
+          break;
+        case 19: o.lfo = (w >>> 6) & 1; break;
+        case 20: o.type = (w >>> 30) & 3; o.flags = (w >>> 24) & 63; o.lfo = (w >>> 21) & 3; o.addr = (w >>> 5) & 0xffff; break;
+        default: o.op = 99;
+      }
+      prog.push(o);
+    }
+    this.prog = prog;
+    this.run = false;
+  }
+  resetState(clearMem) {
+    this.reg.fill(0); this.acc = this.pacc = this.lr = 0; this.run = false;
+    this.sinPhase = [0, 0]; this.sinK = [0, 0]; this.sinAmp = [0, 0]; this.rampPos = [0, 0];
+    if (clearMem) this.mem.fill(0);
+  }
+  _w(msg) { if (!this.warned[msg]) { this.warned[msg] = 1; if (this.onwarn) this.onwarn(msg); } }
+  // one sample. returns [dacL, dacR]
+  step(adcL, adcR) {
+    const reg = this.reg, mem = this.mem, N = this.N, MASK = N - 1, prog = this.prog;
+    const MAXV = 1 - 1 / 8388608;
+    const clamp = (x) => x > MAXV ? MAXV : (x < -1 ? -1 : x);
+    reg[0x14] = adcL; reg[0x15] = adcR;
+    // LFOs advance
+    const s0 = Math.sin(this.sinPhase[0]), c0 = Math.cos(this.sinPhase[0]);
+    const s1 = Math.sin(this.sinPhase[1]), c1 = Math.cos(this.sinPhase[1]);
+    const sinv = [s0, s1], cosv = [c0, c1];
+    // SINn_RATE register override (assumed mapping: 0..1 -> Kf 0..511)
+    for (let l = 0; l < 2; l++) {
+      const rv = reg[l * 2];
+      if (rv !== 0) this.sinK[l] = Math.max(0, Math.min(511, Math.floor(rv * 512)));
+    }
+    const wp = this.wp;
+    let acc = this.acc, pacc = this.pacc, lr = this.lr;
+    const runFlag = this.run;
+    const n = prog.length;
+    for (let pc = 0; pc < n; pc++) {
+      const o = prog[pc];
+      const before = acc;
+      switch (o.op) {
+        case 0: { lr = mem[(wp + o.addr) & MASK]; acc = clamp(acc + lr * o.c); break; }
+        case 1: { const a = Math.max(0, Math.floor(reg[0x18] * 32768)) & MASK; lr = mem[(wp + a) & MASK]; acc = clamp(acc + lr * o.c); break; }
+        case 2: { mem[(wp + o.addr) & MASK] = acc; acc = clamp(acc * o.c); break; }
+        case 3: { mem[(wp + o.addr) & MASK] = acc; acc = clamp(acc * o.c + lr); break; }
+        case 4: acc = clamp(acc + reg[o.r] * o.c); break;
+        case 5: acc = clamp((acc - reg[o.r]) * o.c + reg[o.r]); break;
+        case 6: reg[o.r] = acc; acc = clamp(acc * o.c); break;
+        case 7: reg[o.r] = acc; acc = clamp(acc * o.c + pacc); break;
+        case 8: reg[o.r] = acc; acc = clamp((pacc - acc) * o.c + pacc); break;
+        case 9: acc = Math.max(Math.abs(acc), Math.abs(reg[o.r] * o.c)); acc = clamp(acc); break;
+        case 10: acc = clamp(acc * reg[o.r]); break;
+        case 11: { const a = Math.abs(acc); const l = a > 0 ? Math.log2(a) : -16; acc = clamp(o.c * l / 16 + o.d); break; }
+        case 12: acc = clamp(o.c * Math.pow(2, acc * 16) + o.d); break;
+        case 13: acc = clamp(acc * o.c + o.d); break;
+        case 14: acc = FV1Emu.fromInt(FV1Emu.toInt(acc) & o.m); break;
+        case 15: acc = FV1Emu.fromInt(FV1Emu.toInt(acc) | o.m); break;
+        case 16: acc = FV1Emu.fromInt(FV1Emu.toInt(acc) ^ o.m); break;
+        case 17: {
+          let ok = true; const c = o.cond;
+          if (c & 0x10) ok = ok && runFlag;
+          if (c & 0x08) ok = ok && ((acc >= 0) !== (pacc >= 0));
+          if (c & 0x04) ok = ok && acc === 0;
+          if (c & 0x02) ok = ok && acc >= 0;
+          if (c & 0x01) ok = ok && acc < 0;
+          if (ok) pc += o.n;
+          break;
+        }
+        case 18:
+          if (o.ramp) { reg[4 + 2 * o.lfo] = o.K / 32768; reg[5 + 2 * o.lfo] = o.sel; this.rampPos[o.lfo] = 0; }
+          else { this.sinK[o.lfo] = o.freq; this.sinAmp[o.lfo] = o.amp; }
+          break;
+        case 19: this.rampPos[o.lfo] = 0; break;
+        case 20: {
+          const l = o.lfo, flags = o.flags;
+          if (l >= 2) {                                                     // ramp LFO (pitch shifting)
+            const u = l - 2, units = FV1Emu.RAMPAMP[(reg[5 + 2 * u] | 0) & 3] * 16384, pos0 = this.rampPos[u];
+            if (flags & 0x20) {                                             // NA: crossfade window value
+              let x = Math.max(0, Math.min(1, (0.375 - Math.abs(pos0 / units - 0.5)) * 4));
+              if (flags & 4) x = 1 - x;
+              if (o.type === 0) { lr = mem[(wp + o.addr) & MASK]; acc = clamp(acc + lr * x); }
+              else if (o.type === 2) acc = clamp(acc * x + S16(o.addr) / 32768);
+              else acc = clamp(x);
+              break;
+            }
+            const p = (flags & 0x10) ? (pos0 + units / 2) % units : pos0;   // RPTR2: second read pointer, half a cycle away
+            if (o.type === 3) { acc = clamp(p / units); break; }
+            const off = (flags & 8) ? units - p : p;
+            const ii = Math.floor(off / 16384), fr = (off % 16384) / 16384;
+            const coef = (flags & 4) ? 1 - fr : fr;
+            if (o.type === 0) { lr = mem[(wp + o.addr + ii) & MASK]; acc = clamp(acc + lr * coef); }
+            else acc = clamp(acc * coef + S16(o.addr) / 32768);
+            break;
+          }
+          const val = (flags & 1) ? cosv[l] : sinv[l];
+          if (o.type === 3) { acc = clamp(val); break; }                   // CHO RDAL
+          let pos = val * this.sinAmp[l] / 2;                              // swing is +/- amp/2 samples
+          if (flags & 8) pos = -pos;                                       // COMPA
+          const i = Math.floor(pos), fr = pos - i;
+          const coef = (flags & 4) ? (1 - fr) : fr;                        // COMPC
+          if (o.type === 0) { lr = mem[(wp + o.addr + i) & MASK]; acc = clamp(acc + lr * coef); }
+          else acc = clamp(acc * coef + S16(o.addr) / 32768);
+          break;
+        }
+        default: break;
+      }
+      pacc = before;
+    }
+    this.acc = acc; this.pacc = pacc; this.lr = lr;
+    this.run = true;
+    this.wp = (wp - 1) & MASK;
+    // advance LFO phase: omega = Kf / 2^17 rad/sample
+    for (let l = 0; l < 2; l++) {
+      this.sinPhase[l] += this.sinK[l] / 131072;
+      if (this.sinPhase[l] > 6.283185307179586) this.sinPhase[l] -= 6.283185307179586;
+    }
+    for (let u = 0; u < 2; u++) {                       // ramp LFOs: position moves by -K per sample
+      const units = FV1Emu.RAMPAMP[(reg[5 + 2 * u] | 0) & 3] * 16384;
+      const K = Math.round(reg[4 + 2 * u] * 32768);
+      this.rampPos[u] = (((this.rampPos[u] - K) % units) + units) % units;
+    }
+    return [reg[0x16], reg[0x17]];
+  }
+  static toInt(a) { return Math.round(a * 8388608) & 0xffffff; }
+  static fromInt(i) { i &= 0xffffff; if (i & 0x800000) i -= 0x1000000; return i / 8388608; }
+}
+FV1Emu.RAMPAMP = [4096, 2048, 1024, 512];
+if (typeof module !== 'undefined' && module.exports) module.exports = FV1Emu;
+</script>
+<script type="text/plain" id="worklet-src">/* AudioWorklet processors. FV1Emu is prepended to this source at runtime. */
+class FV1Proc extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    this.emu = new FV1Emu(sampleRate);
+    this.emu.onwarn = (m) => this.port.postMessage({ type: 'warn', msg: m });
+    this.potT = [0.5, 0.5, 0.5]; this.pot = [0.5, 0.5, 0.5];
+    this.bypass = false;
+    this.taps = []; this.tapPk = []; this.old = null; this.xfN = 0; this.xfT = 0;
+    this.pkIn = 0; this.pkOut = 0; this.clipped = false; this.count = 0;
+    this.port.onmessage = (e) => {
+      const m = e.data;
+      if (m.type === 'program') {
+        if (m.xfade) { this.old = this.emu; this.emu = new FV1Emu(sampleRate); this.emu.onwarn = this.old.onwarn; this.emu.load(m.words); this.xfN = this.xfT = Math.round(sampleRate * 0.05); }
+        else { if (m.reset) this.emu.mem.fill(0); this.emu.resetState(false); this.emu.load(m.words); }
+      }
+      else if (m.type === 'taps') { this.taps = m.regs; this.tapPk = m.regs.map(() => 0); }
+      else if (m.type === 'pots') this.potT = m.pots;
+      else if (m.type === 'bypass') this.bypass = !!m.on;
+      else if (m.type === 'reset') this.emu.resetState(true);
+    };
+  }
+  process(inputs, outputs) {
+    const inp = inputs[0], out = outputs[0];
+    const oL = out[0], oR = out[1] || out[0];
+    const iL = inp && inp[0], iR = inp && (inp[1] || inp[0]);
+    const emu = this.emu, reg = emu.reg;
+    for (let i = 0; i < oL.length; i++) {
+      const x = iL ? iL[i] : 0, y = iR ? iR[i] : x;
+      for (let k = 0; k < 3; k++) { this.pot[k] += (this.potT[k] - this.pot[k]) * 0.002; reg[0x10 + k] = this.pot[k]; }
+      let l, r;
+      if (this.bypass) { l = x; r = y; }
+      else {
+        const xi = x < -1 ? -1 : (x > 1 ? 1 : x), yi = y < -1 ? -1 : (y > 1 ? 1 : y);
+        const o = emu.step(xi, yi); l = o[0]; r = o[1];
+        if (this.old) {
+          const po = this.old; for (let k = 0; k < 3; k++) po.reg[0x10 + k] = this.pot[k];
+          const q = po.step(xi, yi), g = this.xfN / this.xfT;
+          l = l * (1 - g) + q[0] * g; r = r * (1 - g) + q[1] * g;
+          if (--this.xfN <= 0) this.old = null;
+        }
+        for (let k = 0; k < this.taps.length; k++) { const v = Math.abs(reg[this.taps[k]]); if (v > this.tapPk[k]) this.tapPk[k] = v; }
+      }
+      oL[i] = l; if (oR !== oL) oR[i] = r;
+      const ax = Math.abs(x), ao = Math.max(Math.abs(l), Math.abs(r));
+      if (ax > this.pkIn) this.pkIn = ax;
+      if (ao > this.pkOut) this.pkOut = ao;
+      if (ao >= 0.9999 || ax >= 0.9999) this.clipped = true;
+    }
+    this.count += oL.length;
+    if (this.count >= 2048) {
+      this.port.postMessage({ type: 'meter', pkIn: this.pkIn, pkOut: this.pkOut, clip: this.clipped, taps: this.tapPk.slice() });
+      this.tapPk.fill(0);
+      this.pkIn = this.pkOut = 0; this.clipped = false; this.count = 0;
+    }
+    return true;
+  }
+}
+registerProcessor('fv1', FV1Proc);
+
+class LooperProc extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    this.max = Math.floor(sampleRate * 60);
+    this.buf = new Float32Array(this.max);
+    this.len = 0; this.pos = 0; this.recPos = 0;
+    this.state = 'idle'; this.backup = null;
+    this.live = true; this.liveGain = 1; this.loopGain = 1; this.count = 0;
+    this.port.onmessage = (e) => {
+      const m = e.data;
+      switch (m.type) {
+        case 'rec': this.buf.fill(0); this.len = 0; this.recPos = 0; this.backup = null; this.state = 'rec'; break;
+        case 'endrec': if (this.state === 'rec') this.finishRec(); break;
+        case 'play': if (this.state === 'rec') this.finishRec(); else if (this.len > 0) { this.pos = 0; this.state = 'play'; } break;
+        case 'overdub': if (this.len > 0) { this.backup = this.buf.slice(0, this.len); this.state = 'overdub'; } break;
+        case 'stop': if (this.state === 'rec') this.finishRec(); this.state = this.len > 0 ? 'stopped' : 'idle'; break;
+        case 'dump': this.port.postMessage({ type: 'dump', data: this.buf.slice(0, this.len), sr: sampleRate }); return;
+        case 'clear': this.len = 0; this.pos = 0; this.state = 'idle'; this.backup = null; this.buf.fill(0); break;
+        case 'undo': if (this.backup) { this.buf.set(this.backup); this.backup = null; if (this.state === 'overdub') this.state = 'play'; } break;
+        case 'load': {
+          const d = m.data; const n = Math.min(d.length, this.max);
+          this.buf.fill(0); this.buf.set(d.subarray(0, n)); this.len = n; this.pos = 0; this.backup = null; this.state = 'play'; break;
+        }
+        case 'set': if ('live' in m) this.live = m.live; if ('liveGain' in m) this.liveGain = m.liveGain; if ('loopGain' in m) this.loopGain = m.loopGain; break;
+      }
+      this.report();
+    };
+  }
+  finishRec() {
+    this.len = this.recPos;
+    if (this.len < 64) { this.len = 0; this.state = 'idle'; return; }
+    const f = Math.min(256, this.len >> 2);
+    for (let i = 0; i < f; i++) { const g = i / f; this.buf[i] *= g; this.buf[this.len - 1 - i] *= g; }
+    this.pos = 0; this.state = 'play';
+  }
+  report() { this.port.postMessage({ type: 'looper', state: this.state, pos: this.state === 'rec' ? this.recPos : this.pos, len: this.state === 'rec' ? this.max : this.len, sr: sampleRate }); }
+  process(inputs, outputs) {
+    const inp = inputs[0], out = outputs[0][0];
+    const iL = inp && inp[0];
+    const s = this.state;
+    for (let i = 0; i < out.length; i++) {
+      const x = iL ? iL[i] : 0;
+      let y = this.live ? x * this.liveGain : 0;
+      if (s === 'rec') {
+        this.buf[this.recPos++] = x;
+        if (this.recPos >= this.max) { this.finishRec(); break; }
+      } else if ((s === 'play' || s === 'overdub') && this.len > 0) {
+        const p = this.pos;
+        y += this.buf[p] * this.loopGain;
+        if (s === 'overdub') { let v = this.buf[p] + x; this.buf[p] = v > 1 ? 1 : (v < -1 ? -1 : v); }
+        this.pos = p + 1 >= this.len ? 0 : p + 1;
+      }
+      out[i] = y;
+    }
+    this.count += out.length;
+    if (this.count >= 4096) { this.count = 0; this.report(); }
+    return true;
+  }
+}
+registerProcessor('looper', LooperProc);
+</script>
+<script>/* FV-1 assembler (SpinASM-compatible subset) -> 32-bit machine words, Intel HEX.
+ * Encoding tables follow the FV-1 datasheet instruction formats and were
+ * cross-checked word-for-word against the open-source asfv1 assembler. */
+(function (root) {
+'use strict';
+
+const PROGLEN = 128, DELAYSIZE = 32767;
+
+const M = { 1:1, 2:3, 5:0x1f, 6:0x3f, 9:0x1ff, 11:0x7ff, 15:0x7fff, 16:0xffff, 24:0xffffff, 32:0xffffffff };
+// mnemonic: [opcode, [mask, shift], ...]
+const OPS = {
+  RDA:[0, [M[15],5],[M[11],21]], RMPA:[1,[M[11],21]],
+  WRA:[2,[M[15],5],[M[11],21]],  WRAP:[3,[M[15],5],[M[11],21]],
+  RDAX:[4,[M[6],5],[M[16],16]],  RDFX:[5,[M[6],5],[M[16],16]],
+  WRAX:[6,[M[6],5],[M[16],16]],  WRHX:[7,[M[6],5],[M[16],16]],
+  WRLX:[8,[M[6],5],[M[16],16]],  MAXX:[9,[M[6],5],[M[16],16]],
+  MULX:[10,[M[6],5]],
+  LOG:[11,[M[16],16],[M[11],5]], EXP:[12,[M[16],16],[M[11],5]], SOF:[13,[M[16],16],[M[11],5]],
+  AND:[14,[M[24],8]], OR:[15,[M[24],8]], XOR:[16,[M[24],8]],
+  SKP:[17,[M[5],27],[M[6],21]],
+  WLDS:[18,[M[1],29],[M[9],20],[M[15],5]],
+  WLDR:[18,[M[2],29],[M[16],13],[M[2],5]],
+  JAM:[19,[M[2],6]],
+  CHO:[20,[M[2],30],[M[2],21],[M[6],24],[M[16],5]],
+  // pseudo ops
+  RAW:[0,[M[32],0]],
+  LDAX:[5,[M[6],5]], ABSA:[9], CLR:[14], NOT:[16,[M[24],8]], NOP:[17], JMP:[17,[M[5],27],[M[6],21]],
+};
+
+const SYMS = {
+  SIN0_RATE:0x00, SIN0_RANGE:0x01, SIN1_RATE:0x02, SIN1_RANGE:0x03,
+  RMP0_RATE:0x04, RMP0_RANGE:0x05, RMP1_RATE:0x06, RMP1_RANGE:0x07,
+  POT0:0x10, POT1:0x11, POT2:0x12, ADCL:0x14, ADCR:0x15, DACL:0x16, DACR:0x17, ADDR_PTR:0x18,
+  SIN0:0, SIN1:1, RMP0:2, RMP1:3, RDA:0, SOF:2, RDAL:3,
+  SIN:0, COS:1, REG:2, COMPC:4, COMPA:8, RPTR2:0x10, NA:0x20,
+  RUN:0x10, ZRC:0x08, ZRO:0x04, GEZ:0x02, NEG:0x01,
+};
+for (let i = 0; i < 32; i++) SYMS['REG' + i] = 0x20 + i;
+
+const MIN_S1_14 = -2, MAX_S1_14 = (32768 - 1) / 16384;
+const MIN_S1_9 = -2, MAX_S1_9 = (1024 - 1) / 512;
+const MIN_S_10 = -1, MAX_S_10 = (1024 - 1) / 1024;
+const MIN_S_15 = -1, MAX_S_15 = (32768 - 1) / 32768;
+const MIN_S_23 = -1, MAX_S_23 = (8388608 - 1) / 8388608;
+
+function roundHalfEven(x) {            // matches Python's round()
+  const f = Math.floor(x), d = x - f;
+  if (d < 0.5) return f;
+  if (d > 0.5) return f + 1;
+  return (f % 2 === 0) ? f : f + 1;
+}
+
+const TOKRE = /\s*(?:([A-Za-z_][A-Za-z0-9_]*)|(0[xX][0-9a-fA-F_]+|0[bB][01_]+)|(\$[0-9a-fA-F_]+)|(%[01_]+)|((?:\d+\.\d*|\.\d+|\d+)(?:[eE][+-]?\d+)?)|(<<|>>|\/\/|\*\*|[-+*\/|&^~(),:]))/y;
+
+function assemble(src, opts) {
+  opts = opts || {};
+  const errors = [], warnings = [];
+  const sym = Object.assign({}, SYMS);
+  const labels = {};              // skip targets
+  const pl = [];                  // parsed instructions {cmd:[...], target, line}
+  let delaymem = 0;
+  const memLayout = [];
+  let line = 0;
+
+  const err = (m, ln) => errors.push({ line: ln || line, msg: m });
+  const warn = (m, ln) => warnings.push({ line: ln || line, msg: m });
+
+  function tokenize(text) {
+    const toks = [];
+    TOKRE.lastIndex = 0;
+    let pos = 0;
+    const s = text;
+    while (pos < s.length) {
+      if (/^\s*$/.test(s.slice(pos))) break;
+      TOKRE.lastIndex = pos;
+      const m = TOKRE.exec(s);
+      if (!m) { err('Unrecognised input "' + s.slice(pos).trim().slice(0, 12) + '"'); return toks; }
+      pos = TOKRE.lastIndex;
+      if (m[1] !== undefined) {
+        let id = m[1].toUpperCase();
+        // name# / name^ memory modifiers (only if defined)
+        const nx = s[pos];
+        if ((nx === '#' || nx === '^') && (id + nx) in sym) { id += nx; pos++; }
+        toks.push({ t: 'id', v: id, raw: m[1] });
+      } else if (m[2] !== undefined) {
+        const x = m[2].toLowerCase().replace(/_/g, '');
+        toks.push({ t: 'num', v: x.startsWith('0x') ? parseInt(x.slice(2), 16) : parseInt(x.slice(2), 2), real: false });
+      } else if (m[3] !== undefined) {
+        toks.push({ t: 'num', v: parseInt(m[3].slice(1).replace(/_/g, ''), 16), real: false });
+      } else if (m[4] !== undefined) {
+        toks.push({ t: 'num', v: parseInt(m[4].slice(1).replace(/_/g, ''), 2), real: false });
+      } else if (m[5] !== undefined) {
+        const txt = m[5];
+        const real = /[.eE]/.test(txt) || txt === '1' || txt === '2';   // "spinreals": bare 1 and 2 are reals
+        toks.push({ t: 'num', v: parseFloat(txt), real, bare: !/[.eE]/.test(txt) });
+      } else if (m[6] !== undefined) {
+        toks.push({ t: 'op', v: m[6] });
+      }
+    }
+    return toks;
+  }
+
+  // ---------- expression evaluator over token slice ----------
+  function evalExpr(toks) {
+    let i = 0;
+    const peek = () => toks[i];
+    const isOp = (v) => i < toks.length && toks[i].t === 'op' && toks[i].v === v;
+    function primary() {
+      const t = toks[i];
+      if (!t) throw new Error('Missing operand');
+      if (t.t === 'num') { i++; return { v: t.v, r: t.real }; }
+      if (t.t === 'id') {
+        i++;
+        if (!(t.v in sym)) throw new Error('Undefined symbol ' + t.raw);
+        const v = sym[t.v];
+        return { v, r: !Number.isInteger(v) };
+      }
+      if (t.t === 'op' && t.v === '(') {
+        i++; const r = bor();
+        if (!isOp(')')) throw new Error('Missing )');
+        i++; return r;
+      }
+      throw new Error('Unexpected "' + (t.v) + '"');
+    }
+    function unary() {
+      if (isOp('-')) { i++; const a = unary(); return { v: -a.v, r: a.r }; }
+      if (isOp('+')) { i++; return unary(); }
+      if (isOp('~')) { i++; const a = unary(); return { v: ~Math.trunc(a.v), r: false }; }
+      return primary();
+    }
+    function mul() {
+      let a = unary();
+      while (isOp('*') || isOp('/') || isOp('//')) {
+        const op = toks[i++].v; const b = unary();
+        if (op === '*') a = { v: a.v * b.v, r: a.r || b.r };
+        else if (op === '/') a = { v: a.v / b.v, r: true };
+        else a = { v: Math.floor(a.v / b.v), r: false };
+      }
+      return a;
+    }
+    function add() {
+      let a = mul();
+      while (isOp('+') || isOp('-')) {
+        const op = toks[i++].v; const b = mul();
+        a = op === '+' ? { v: a.v + b.v, r: a.r || b.r } : { v: a.v - b.v, r: a.r || b.r };
+      }
+      return a;
+    }
+    function shift() {
+      let a = add();
+      while (isOp('<<') || isOp('>>')) {
+        const op = toks[i++].v; const b = add();
+        a = { v: op === '<<' ? Math.trunc(a.v) * Math.pow(2, b.v) : Math.floor(a.v / Math.pow(2, b.v)), r: false };
+      }
+      return a;
+    }
+    function band() { let a = shift(); while (isOp('&')) { i++; const b = shift(); a = { v: (Math.trunc(a.v) & Math.trunc(b.v)) >>> 0, r: false }; } return a; }
+    function bxor() { let a = band(); while (isOp('^')) { i++; const b = band(); a = { v: (Math.trunc(a.v) ^ Math.trunc(b.v)) >>> 0, r: false }; } return a; }
+    function bor() { let a = bxor(); while (isOp('|')) { i++; const b = bxor(); a = { v: (Math.trunc(a.v) | Math.trunc(b.v)) >>> 0, r: false }; } return a; }
+    const res = bor();
+    if (i < toks.length) throw new Error('Unexpected "' + toks[i].v + '"');
+    return res;
+  }
+
+  // ---------- argument converters (mirror asfv1) ----------
+  function clampInt(v, lo, hi, what) {
+    if (v < lo) { warn(what + ' clamped to ' + lo); return lo; }
+    if (v > hi) { warn(what + ' clamped to ' + hi); return hi; }
+    return v;
+  }
+  function fixed(e, minv, maxv, ref, rawMax, what) {
+    if (!e.r) return clampInt(Math.trunc(e.v), 0, rawMax, what);
+    let v = e.v;
+    if (v < minv) { warn(what + ' clamped to ' + minv); v = minv; }
+    if (v > maxv) { warn(what + ' clamped to ' + maxv); v = maxv; }
+    return roundHalfEven(v * ref);
+  }
+  const s1_14 = (e) => fixed(e, MIN_S1_14, MAX_S1_14, 16384, 0xffff, 'S1.14 value');
+  const s1_9  = (e) => fixed(e, MIN_S1_9, MAX_S1_9, 512, 0x7ff, 'S1.9 value');
+  const s_10  = (e) => fixed(e, MIN_S_10, MAX_S_10, 1024, 0x7ff, 'S.10 value');
+  const s_23  = (e) => fixed(e, MIN_S_23, MAX_S_23, 8388608, 0xffffff, 'S.23 value');
+  function intArg(e, lo, hi, what) {
+    if (!Number.isInteger(e.v)) throw new Error('Invalid ' + what + ' ' + e.v);
+    if (e.v < lo || e.v > hi) throw new Error(what + ' ' + e.v + ' out of range');
+    return e.v;
+  }
+  function d15(e) {   // delay address
+    let v = e.v;
+    if (v < MIN_S_15 || v > MAX_S_15) {
+      v = roundHalfEven(v);
+      if (v < -0x8000 || v > 0x7fff) { warn('Address clamped'); v = Math.max(-0x8000, Math.min(0x7fff, v)); }
+      return v;
+    }
+    return roundHalfEven(v * 32768);
+  }
+  function s15a(e) {  // CHO address
+    if (e.r && Number.isInteger(e.v)) e = { v: e.v, r: false };
+    if (!e.r) return clampInt(Math.trunc(e.v), 0, 0xffff, 'Address');
+    let v = Math.max(MIN_S_15, Math.min(MAX_S_15, e.v));
+    return roundHalfEven(v * 32768);
+  }
+
+  // proper shifted-OR without int32 overflow
+  function opGen2(cmd) {
+    const gen = OPS[cmd[0]];
+    let w = gen[0] >>> 0;
+    for (let i = 1; i < gen.length; i++) {
+      if (i < cmd.length) {
+        const field = (cmd[i] & gen[i][0]) >>> 0;
+        w = (w | ((field << gen[i][1]) >>> 0)) >>> 0;
+      }
+    }
+    return w >>> 0;
+  }
+
+  // ---------- statement parsing ----------
+  const lines = String(src).split(/\r?\n/);
+  for (let ln = 0; ln < lines.length; ln++) {
+    line = ln + 1;
+    const text = lines[ln].split(';')[0];
+    if (/^\s*$/.test(text)) continue;
+    let toks = tokenize(text);
+    try {
+      // labels:  name:
+      while (toks.length >= 2 && toks[0].t === 'id' && toks[1].t === 'op' && toks[1].v === ':') {
+        labels[toks[0].v] = pl.length;
+        toks = toks.slice(2);
+      }
+      if (!toks.length) continue;
+      const first = toks[0];
+      if (first.t !== 'id') throw new Error('Unexpected "' + first.v + '"');
+
+      // directives
+      let dir = null, name = null, rest = null;
+      if (first.v === 'EQU' || first.v === 'MEM') { dir = first.v; name = toks[1] && toks[1].v; rest = toks.slice(2); }
+      else if (toks[1] && toks[1].t === 'id' && (toks[1].v === 'EQU' || toks[1].v === 'MEM')) { dir = toks[1].v; name = first.v; rest = toks.slice(2); }
+      if (dir) {
+        if (!name) throw new Error('Missing name');
+        name = name.replace(/[#^]$/, '');
+        if (['RDAL', 'SOF', 'RDA'].includes(name)) throw new Error('Reserved name ' + name);
+        const e = evalExpr(rest);
+        if (dir === 'EQU') { sym[name] = e.v; }
+        else {
+          if (!Number.isInteger(e.v)) throw new Error('Memory ' + name + ' length not an integer');
+          let size = e.v;
+          if (size < 0 || size > DELAYSIZE) { warn('Memory size clamped'); size = Math.max(0, Math.min(DELAYSIZE, size)); }
+          const top = delaymem + size;
+          if (delaymem > DELAYSIZE || top > DELAYSIZE) throw new Error('Delay memory exhausted (' + name + ')');
+          sym[name] = delaymem; sym[name + '#'] = top; sym[name + '^'] = delaymem + Math.floor(size / 2);
+          memLayout.push(name + ':' + delaymem + '+' + size);
+          delaymem = top + 1;
+        }
+        continue;
+      }
+
+      // instruction
+      const mn = first.v;
+      if (!(mn in OPS)) throw new Error('Unexpected "' + first.raw + '"');
+      if (pl.length >= PROGLEN) throw new Error('Program exceeds ' + PROGLEN + ' instructions');
+      // split operands on commas
+      const args = []; let cur = [];
+      for (const t of toks.slice(1)) {
+        if (t.t === 'op' && t.v === ',') { args.push(cur); cur = []; } else cur.push(t);
+      }
+      if (cur.length || args.length) args.push(cur);
+      const need = (n) => { if (args.length < n) throw new Error('Missing operand for ' + mn); if (args.length > n) warn('Excess operands for ' + mn); };
+      const E = (k) => evalExpr(args[k]);
+
+      switch (mn) {
+        case 'AND': case 'OR': case 'XOR': need(1); pl.push({ cmd: [mn, s_23(E(0))], line }); break;
+        case 'SOF': case 'EXP': case 'LOG': need(2); pl.push({ cmd: [mn, s1_14(E(0)), s_10(E(1))], line }); break;
+        case 'RDAX': case 'WRAX': case 'MAXX': case 'RDFX': case 'WRLX': case 'WRHX':
+          need(2); pl.push({ cmd: [mn, intArg(E(0), 0, 63, 'Register'), s1_14(E(1))], line }); break;
+        case 'MULX': need(1); pl.push({ cmd: [mn, intArg(E(0), 0, 63, 'Register')], line }); break;
+        case 'SKP': case 'JMP': {
+          let cond = 0, a = args;
+          if (mn === 'SKP') { need(2); cond = intArg(E(0), 0, 31, 'Condition'); a = [args[1]]; } else need(1);
+          let target = null, off = 0;
+          if (a[0].length === 1 && a[0][0].t === 'id' && !(a[0][0].v in sym)) target = a[0][0].v;
+          else off = intArg(evalExpr(a[0]), 0, 63, 'Offset');
+          pl.push({ cmd: ['SKP', cond, off], target, line }); break;
+        }
+        case 'RDA': case 'WRA': case 'WRAP': need(2); pl.push({ cmd: [mn, d15(E(0)), s1_9(E(1))], line }); break;
+        case 'RMPA': need(1); pl.push({ cmd: [mn, s1_9(E(0))], line }); break;
+        case 'WLDS': need(3); {
+          const lfo = intArg(E(0), 0, 3, 'LFO') & 1;
+          pl.push({ cmd: [mn, lfo, intArg(E(1), 0, 511, 'Frequency'), d15(E(2))], line });
+        } break;
+        case 'WLDR': need(3); {
+          const lfo = intArg(E(0), 0, 3, 'LFO') | 2;
+          let f = E(1).v;
+          if (f < -0.5 || f > MAX_S_15) { f = Math.max(-0x8000, Math.min(0x7fff, roundHalfEven(f))); } else f = roundHalfEven(f * 32768);
+          const amps = { 4096: 0, 2048: 1, 1024: 2, 512: 3, 0: 0, 1: 1, 2: 2, 3: 3 };
+          const av = E(2).v; if (!(av in amps)) throw new Error('Invalid ramp amplitude ' + av);
+          pl.push({ cmd: [mn, lfo, f, amps[av]], line });
+        } break;
+        case 'JAM': need(1); pl.push({ cmd: [mn, intArg(E(0), 0, 3, 'LFO') | 2], line }); break;
+        case 'CHO': {
+          if (args.length < 2) throw new Error('Missing operand for CHO');
+          const ty = evalExpr(args[0]).v;
+          if (![0, 2, 3].includes(ty)) throw new Error('Invalid CHO type');
+          const lfo = intArg(E(1), 0, 3, 'LFO');
+          let flags = 2, arg = 0;
+          const fl = (x) => {
+            let f = intArg(x, 0, 63, 'Flags');
+            const keep = (lfo & 2) ? (f & 0x3e) : (f & 0x0f);
+            if (keep !== f) warn('CHO flags adjusted to 0x' + keep.toString(16));
+            return keep;
+          };
+          if (ty === 0 || ty === 2) { need(4); flags = fl(E(2)); arg = s15a(E(3)); }
+          else if (args.length >= 3) flags = fl(E(2));
+          pl.push({ cmd: ['CHO', ty, lfo, flags, arg], line });
+        } break;
+        case 'RAW': need(1); pl.push({ cmd: ['RAW', Math.max(0, Math.min(0xffffffff, Math.trunc(E(0).v)))], line }); break;
+        case 'CLR': pl.push({ cmd: ['AND', 0], line }); break;
+        case 'NOT': pl.push({ cmd: ['XOR', 0xffffff], line }); break;
+        case 'NOP': pl.push({ cmd: ['SKP', 0, 0], line }); break;
+        case 'ABSA': pl.push({ cmd: ['MAXX', 0, 0], line }); break;
+        case 'LDAX': need(1); pl.push({ cmd: ['RDFX', intArg(E(0), 0, 63, 'Register'), 0], line }); break;
+        default: throw new Error('Unexpected "' + first.raw + '"');
+      }
+    } catch (e) { err(e.message); }
+  }
+
+  // resolve skip targets
+  pl.forEach((p, idx) => {
+    if (p.cmd[0] === 'SKP' && p.target) {
+      if (!(p.target in labels)) { err('Undefined skip target ' + p.target, p.line); return; }
+      const dest = labels[p.target];
+      if (dest <= idx) { err('Target ' + p.target + ' does not follow SKP', p.line); return; }
+      const off = dest - idx - 1;
+      if (off > 63) { err('Skip to ' + p.target + ' too far (' + off + ')', p.line); return; }
+      p.cmd[2] = off;
+    }
+  });
+
+  const words = new Uint32Array(PROGLEN);
+  const ninstr = pl.length;
+  for (let i = 0; i < PROGLEN; i++) words[i] = i < ninstr ? opGen2(pl[i].cmd) : 0x11; // pad with SKP 0,0 (NOP)
+  return { words, ninstr, errors, warnings, memUsed: delaymem, memLayout, symbols: sym };
+}
+
+function wordsToBytes(words) {
+  const b = new Uint8Array(words.length * 4);
+  for (let i = 0; i < words.length; i++) {
+    b[4 * i] = (words[i] >>> 24) & 255; b[4 * i + 1] = (words[i] >>> 16) & 255;
+    b[4 * i + 2] = (words[i] >>> 8) & 255; b[4 * i + 3] = words[i] & 255;
+  }
+  return b;
+}
+
+// 8 programs x 512 bytes = 4096 byte image for a 24LC32A
+function buildBankImage(programWordsArr) {
+  const img = new Uint8Array(4096);
+  for (let s = 0; s < 8; s++) {
+    const w = programWordsArr[s] || new Uint32Array(PROGLEN).fill(0x11);
+    img.set(wordsToBytes(w), s * 512);
+  }
+  return img;
+}
+
+function toIntelHex(bytes, width) {
+  width = width || 16;
+  let out = '';
+  for (let a = 0; a < bytes.length; a += width) {
+    const n = Math.min(width, bytes.length - a);
+    let sum = n + ((a >> 8) & 255) + (a & 255);
+    let l = ':' + hex(n, 2) + hex(a, 4) + '00';
+    for (let j = 0; j < n; j++) { l += hex(bytes[a + j], 2); sum += bytes[a + j]; }
+    l += hex((-sum) & 255, 2);
+    out += l + '\n';
+  }
+  return out + ':00000001FF\n';
+}
+function hex(v, n) { return (v >>> 0).toString(16).toUpperCase().padStart(n, '0'); }
+
+
+// ---------- disassembler: machine words -> SpinASM text that re-assembles to the same words ----------
+const REGNAME = {};
+Object.keys(SYMS).forEach((k) => { if (/^(SIN[01]_|RMP[01]_|POT|ADC|DAC|ADDR_PTR|REG\d)/.test(k) && !(SYMS[k] in REGNAME)) REGNAME[SYMS[k]] = k.toLowerCase(); });
+function disassemble(words, opts) {
+  opts = opts || {};
+  const sg = (v, b) => ((v & (1 << (b - 1))) ? v - (1 << b) : v);
+  const rn = (r) => REGNAME[r] || ('$' + r.toString(16));
+  const f = (x, n) => { let t = x.toFixed(n || 9); if (t.indexOf('.') < 0) t += '.0'; return t; };
+  const NOP = 0x11;
+  let last = -1;
+  for (let i = 0; i < words.length; i++) if ((words[i] >>> 0) !== NOP) last = i;
+  const out = [];
+  if (!opts.noHeader) out.push('; Disassembled by FV-1 Studio', '; Delay addresses are plain numbers (no MEM names).');
+  const hex6 = (v) => '$' + (v >>> 0).toString(16).padStart(6, '0');
+  for (let i = 0; i <= last; i++) {
+    const w = words[i] >>> 0, op = w & 31;
+    let t;
+    switch (op) {
+      case 0: case 2: case 3: t = ['rda', 'rmpa', 'wra', 'wrap'][op] + ' ' + ((w >>> 5) & 0x7fff) + ',' + f(sg((w >>> 21) & 0x7ff, 11) / 512); break;
+      case 1: t = 'rmpa ' + f(sg((w >>> 21) & 0x7ff, 11) / 512); break;
+      case 4: case 5: case 6: case 7: case 8: case 9: {
+        const nm = ['rdax', 'rdfx', 'wrax', 'wrhx', 'wrlx', 'maxx'][op - 4], reg = (w >>> 5) & 63, c = sg((w >>> 16) & 0xffff, 16) / 16384;
+        if (op === 5 && c === 0) t = 'ldax ' + rn(reg);
+        else if (op === 9 && c === 0 && reg === 0) t = 'absa';
+        else t = nm + ' ' + rn(reg) + ',' + f(c);
+        break;
+      }
+      case 10: t = 'mulx ' + rn((w >>> 5) & 63); break;
+      case 11: case 12: case 13: t = ['log', 'exp', 'sof'][op - 11] + ' ' + f(sg((w >>> 16) & 0xffff, 16) / 16384) + ',' + f(sg((w >>> 5) & 0x7ff, 11) / 1024); break;
+      case 14: case 15: case 16: {
+        const m = (w >>> 8) & 0xffffff;
+        if (op === 14 && m === 0) t = 'clr';
+        else if (op === 16 && m === 0xffffff) t = 'not';
+        else t = ['and', 'or', 'xor'][op - 14] + ' ' + hex6(m);
+        break;
+      }
+      case 17: {
+        const cond = (w >>> 27) & 31, n = (w >>> 21) & 63;
+        if (cond === 0 && n === 0 && (w >>> 0) === NOP) { t = 'nop'; break; }
+        const names = [[0x10, 'run'], [8, 'zrc'], [4, 'zro'], [2, 'gez'], [1, 'neg']].filter((x) => cond & x[0]).map((x) => x[1]);
+        t = 'skp ' + (names.length ? names.join('|') : '0') + ',' + n;
+        break;
+      }
+      case 18:
+        if ((w >>> 30) & 1) t = 'wldr rmp' + ((w >>> 29) & 1) + ',' + sg((w >>> 13) & 0xffff, 16) + ',' + [4096, 2048, 1024, 512][(w >>> 5) & 3];
+        else t = 'wlds sin' + ((w >>> 29) & 1) + ',' + ((w >>> 20) & 0x1ff) + ',' + ((w >>> 5) & 0x7fff);
+        break;
+      case 19: t = 'jam rmp' + ((w >>> 6) & 1); break;
+      case 20: {
+        const ty = (w >>> 30) & 3, lfo = (w >>> 21) & 3, fl = (w >>> 24) & 63, ad = (w >>> 5) & 0xffff;
+        if (ty === 1) { t = 'raw $' + w.toString(16).padStart(8, '0'); break; }
+        const fn = [];
+        if (lfo < 2) fn.push((fl & 1) ? 'cos' : 'sin');
+        [[2, 'reg'], [4, 'compc'], [8, 'compa'], [0x10, 'rptr2'], [0x20, 'na']].forEach((x) => { if (fl & x[0]) fn.push(x[1]); });
+        const fs = fn.length ? fn.join('|') : '0', ln = ['sin0', 'sin1', 'rmp0', 'rmp1'][lfo];
+        if (ty === 3) t = 'cho rdal,' + ln + (fl ? ',' + fs : '');
+        else t = 'cho ' + (ty === 0 ? 'rda' : 'sof') + ',' + ln + ',' + fs + ',' + ad;
+        break;
+      }
+      default: t = 'raw $' + w.toString(16).padStart(8, '0');
+    }
+    out.push(t);
+  }
+  return out.join('\n') + '\n';
+}
+
+function parseIntelHex(text) {
+  const bytes = []; let base = 0, maxA = 0;
+  const lines = String(text).split(/\r?\n/);
+  for (const ln of lines) {
+    const l = ln.trim(); if (!l) continue;
+    if (l[0] !== ':') throw new Error('Not an Intel HEX file (line starts with "' + l[0] + '")');
+    const n = parseInt(l.substr(1, 2), 16), a = parseInt(l.substr(3, 4), 16), t = parseInt(l.substr(7, 2), 16);
+    let sum = 0; for (let i = 1; i + 1 < l.length; i += 2) sum += parseInt(l.substr(i, 2), 16);
+    if (sum & 255) throw new Error('Bad checksum in HEX file');
+    if (t === 0) for (let j = 0; j < n; j++) { const addr = base + a + j; bytes[addr] = parseInt(l.substr(9 + 2 * j, 2), 16); if (addr > maxA) maxA = addr; }
+    else if (t === 4) base = parseInt(l.substr(9, 4), 16) << 16;
+    else if (t === 2) base = parseInt(l.substr(9, 4), 16) << 4;
+    else if (t === 1) break;
+  }
+  const out = new Uint8Array(maxA + 1).fill(0);
+  bytes.forEach((v, i) => { if (v !== undefined) out[i] = v; });
+  return out;
+}
+// bytes -> array of Uint32Array(128) programs (up to 8). Short files are padded with NOPs.
+function splitPrograms(bytes) {
+  const nprog = Math.min(8, Math.max(1, Math.ceil(bytes.length / 512)));
+  const progs = [];
+  for (let p = 0; p < nprog; p++) {
+    const w = new Uint32Array(128).fill(0x11);
+    for (let i = 0; i < 128; i++) {
+      const o = p * 512 + i * 4; if (o + 3 >= bytes.length + 3 && o >= bytes.length) break;
+      w[i] = (((bytes[o] || 0) << 24) | ((bytes[o + 1] || 0) << 16) | ((bytes[o + 2] || 0) << 8) | (bytes[o + 3] || 0)) >>> 0;
+    }
+    progs.push(w);
+  }
+  return progs;
+}
+
+const api = { assemble, disassemble, parseIntelHex, splitPrograms, wordsToBytes, buildBankImage, toIntelHex, PROGLEN, DELAYSIZE };
+if (typeof module !== 'undefined' && module.exports) module.exports = api;
+else root.FV1ASM = api;
+})(typeof self !== 'undefined' ? self : this);
+</script>
+<script>/* Patch graph -> SpinASM code generator + node/preset definitions. */
+(function (root) {
+'use strict';
+const FS = 32000;
+const f6 = (x) => (Math.round(x * 1e6) / 1e6).toFixed(6);
+const cc = (x) => f6(Math.max(-2, Math.min(1.99993, x)));        // S1.14 coefficient
+const kPole = (hz) => Math.max(0.0001, Math.min(1, 1 - Math.exp(-2 * Math.PI * hz / FS)));
+const kfOf = (hz) => Math.max(1, Math.min(511, Math.round(hz * 2 * Math.PI * 131072 / FS)));
+const hzOf = (kf) => kf * FS / (2 * Math.PI * 131072);
+const MAX_LFO_HZ = hzOf(511);
+
+class Ctx {
+  constructor() { this.code = []; this.setupLines = []; this.memLines = []; this.memTop = 0; this.regN = 0; this.lfoUsed = [null, null]; this.rmpUsed = [null, null]; this.n = 0; }
+  e(s) { this.code.push(s); }
+  c(s) { this.code.push('; ' + s); }
+  reg() { if (this.regN >= 32) throw new Error('Out of registers (32 max)'); return 'REG' + (this.regN++); }
+  mem(name, size, align) {
+    align = align || 1;
+    if (this.memTop % align) {
+      const pad = align - (this.memTop % align);
+      this.memLines.push(`mem pad${this.memLines.length} ${pad - 1}`);
+      this.memTop += pad;
+    }
+    if (this.memTop + size > 32767) throw new Error('Out of delay memory (' + (this.memTop + size) + ' of 32767 samples needed)');
+    const start = this.memTop;
+    this.memLines.push(`mem ${name} ${size}`);
+    this.memTop += size + 1;
+    return { name, start, size };
+  }
+  lfo(who) {
+    const i = this.lfoUsed.indexOf(null);
+    if (i < 0) throw new Error('Only 2 sine LFOs exist on the FV-1 (' + who + ' needs a third)');
+    this.lfoUsed[i] = who; return i;
+  }
+  rmp(who) {
+    const i = this.rmpUsed.indexOf(null);
+    if (i < 0) throw new Error('Only 2 ramp LFOs exist on the FV-1 (' + who + ' needs a third)');
+    this.rmpUsed[i] = who; return i;
+  }
+  setup(s) { this.setupLines.push(s); }
+  onePole(inSig, hz, lpName) {            // lp reg holds low-passed signal; ACC cleared
+    const lp = lpName || this.reg();
+    this.e(`rdax ${inSig},1.0`); this.e(`rdfx ${lp},${f6(kPole(hz))}`); this.e(`wrax ${lp},0`);
+    return lp;
+  }
+}
+
+const P = (id, label, min, max, step, def, extra) => Object.assign({ id, label, min, max, step, def }, extra || {});
+const AUD = 'audio', CTL = 'ctl';
+
+const NODE_TYPES = {
+  input: {
+    title: 'Input', color: '#4aa3ff', unique: true,
+    inputs: [], outputs: [{ id: 'l', label: 'L', kind: AUD }, { id: 'r', label: 'R', kind: AUD }], params: [],
+    gen: () => ({ l: 'ADCL', r: 'ADCR' }),
+  },
+  output: {
+    title: 'Output', color: '#4aa3ff', unique: true,
+    inputs: [{ id: 'l', label: 'L', kind: AUD }, { id: 'r', label: 'R', kind: AUD }], outputs: [],
+    params: [P('level', 'Level', 0, 1.99, 0.01, 1)],
+    gen: (c, n, ins) => {
+      const lv = cc(n.p.level);
+      c.c('Output');
+      if (ins.l && ins.r) { c.e(`rdax ${ins.l},${lv}`); c.e('wrax DACL,0'); c.e(`rdax ${ins.r},${lv}`); c.e('wrax DACR,0'); }
+      else if (ins.l || ins.r) { c.e(`rdax ${ins.l || ins.r},${lv}`); c.e('wrax DACL,1.0'); c.e('wrax DACR,0'); }
+      return {};
+    },
+  },
+  pot: {
+    title: 'Pot', color: '#ff9f43',
+    inputs: [], outputs: [{ id: 'out', label: 'out', kind: CTL }],
+    params: [P('pot', 'Pot #', 0, 2, 1, 0, { int: true }), P('curve', 'Taper', 0, 3, 1, 0, { select: ['Linear', 'Log (slow start)', 'Reverse linear', 'Reverse log'] }),
+      P('lo', 'Min', 0, 1, 0.01, 0), P('hi', 'Max', 0, 1, 0.01, 1)],
+    gen: (c, n) => {
+      const pn = 'POT' + Math.round(n.p.pot), cv = Math.round(n.p.curve || 0), lo = n.p.lo === undefined ? 0 : n.p.lo, hi = n.p.hi === undefined ? 1 : n.p.hi;
+      if (cv === 0 && lo === 0 && hi === 1) return { out: pn };
+      const o = c.reg(); c.c('Pot shaping (' + ['linear', 'log', 'reverse', 'reverse log'][cv] + ', ' + lo + '..' + hi + ')');
+      c.e(`rdax ${pn},1.0`);
+      if (cv === 1 || cv === 3) c.e(`mulx ${pn}`);
+      if (cv >= 2) c.e('sof -1.0,0.999');
+      c.e(`sof ${f6(hi - lo)},${f6(Math.min(0.999, lo))}`); c.e(`wrax ${o},0`);
+      return { out: o };
+    },
+  },
+  gain: {
+    title: 'Gain / VCA', color: '#7bd88f',
+    inputs: [{ id: 'in', label: 'in', kind: AUD }, { id: 'ctl', label: 'ctl', kind: CTL }], outputs: [{ id: 'out', label: 'out', kind: AUD }],
+    params: [P('gain', 'Gain', 0, 1.99, 0.01, 1)],
+    gen: (c, n, ins) => {
+      const o = c.reg(); c.c('Gain');
+      if (!ins.in) { c.e('clr'); c.e(`wrax ${o},0`); return { out: o }; }
+      if (ins.ctl) {
+        c.e(`rdax ${ins.in},1.0`); c.e(`mulx ${ins.ctl}`);
+        if (Math.abs(n.p.gain - 1) > 0.005) c.e(`sof ${cc(n.p.gain)},0`);
+        c.e(`wrax ${o},0`);
+      } else { c.e(`rdax ${ins.in},${cc(n.p.gain)}`); c.e(`wrax ${o},0`); }
+      return { out: o };
+    },
+  },
+  mixer: {
+    title: 'Mixer', color: '#7bd88f',
+    inputs: [{ id: 'a', label: 'a', kind: AUD }, { id: 'b', label: 'b', kind: AUD }, { id: 'c', label: 'c', kind: AUD }], outputs: [{ id: 'out', label: 'out', kind: AUD }],
+    params: [P('ga', 'Level a', 0, 1.99, 0.01, 0.7), P('gb', 'Level b', 0, 1.99, 0.01, 0.7), P('gc', 'Level c', 0, 1.99, 0.01, 0.7)],
+    gen: (c, n, ins) => {
+      const o = c.reg(); c.c('Mixer');
+      let any = false;
+      ['a', 'b', 'c'].forEach((k) => { if (ins[k]) { c.e(`rdax ${ins[k]},${cc(n.p['g' + k])}`); any = true; } });
+      if (!any) c.e('clr');
+      c.e(`wrax ${o},0`); return { out: o };
+    },
+  },
+  xfade: {
+    title: 'Dry/Wet', color: '#7bd88f',
+    inputs: [{ id: 'a', label: 'dry', kind: AUD }, { id: 'b', label: 'wet', kind: AUD }, { id: 'ctl', label: 'mix', kind: CTL }], outputs: [{ id: 'out', label: 'out', kind: AUD }],
+    params: [P('mix', 'Mix', 0, 1, 0.01, 0.5)],
+    gen: (c, n, ins) => {
+      const o = c.reg(); c.c('Dry/Wet crossfade');
+      if (ins.ctl) {
+        if (ins.a && ins.b) {
+          c.e(`rdax ${ins.b},0.5`); c.e(`rdax ${ins.a},-0.5`); c.e(`mulx ${ins.ctl}`); c.e('sof 1.99993,0'); c.e(`rdax ${ins.a},1.0`);
+        } else if (ins.b) { c.e(`rdax ${ins.b},1.0`); c.e(`mulx ${ins.ctl}`); }
+        else if (ins.a) { c.e(`rdax ${ins.a},1.0`); c.e(`mulx ${ins.ctl}`); c.e('sof -1.0,0'); c.e(`rdax ${ins.a},1.0`); }
+        else c.e('clr');
+      } else {
+        const m = n.p.mix;
+        if (ins.a) c.e(`rdax ${ins.a},${cc(1 - m)}`);
+        if (ins.b) c.e(`rdax ${ins.b},${cc(m)}`);
+        if (!ins.a && !ins.b) c.e('clr');
+      }
+      c.e(`wrax ${o},0`); return { out: o };
+    },
+  },
+  delay: {
+    title: 'Delay', color: '#c780ff',
+    inputs: [{ id: 'in', label: 'in', kind: AUD }, { id: 'time', label: 'time', kind: CTL }, { id: 'fb', label: 'fdbk', kind: CTL }], outputs: [{ id: 'out', label: 'wet', kind: AUD }],
+    params: [P('time', 'Time (max) ms', 20, 900, 1, 350, { unit: 'ms' }), P('fb', 'Feedback', 0, 0.98, 0.01, 0.45), P('damp', 'Damping Hz', 500, 15000, 10, 4000, { log: true, unit: 'Hz' })],
+    gen: (c, n, ins) => {
+      const L = Math.max(64, Math.min(30000, Math.round(n.p.time * 32)));
+      const D = c.mem('dly' + n.id, L, ins.time ? 32 : 1);
+      const o = c.reg(); const lp = n.p.damp < 14900 ? c.reg() : null;
+      c.c('Delay');
+      if (ins.time) {
+        const minS = 32;
+        c.e(`rdax ${ins.time},1.0`); c.e(`sof ${f6((L - minS) / 32768)},${f6((D.start + minS) / 32768)}`);
+        c.e('wrax addr_ptr,0'); c.e('rmpa 1.0');
+      } else c.e(`rda ${D.name}#,1.0`);
+      if (ins.fb) { c.e(`wrax ${o},0`); c.e(`rdax ${o},${cc(n.p.fb)}`); c.e(`mulx ${ins.fb}`); }
+      else c.e(`wrax ${o},${cc(n.p.fb)}`);
+      if (lp) { c.e(`rdfx ${lp},${f6(kPole(n.p.damp))}`); c.e(`wrax ${lp},1.0`); }
+      if (ins.in) c.e(`rdax ${ins.in},1.0`);
+      c.e(`wra ${D.name},0`);
+      return { out: o };
+    },
+  },
+  reverb: {
+    title: 'Reverb', color: '#c780ff',
+    inputs: [{ id: 'in', label: 'in', kind: AUD }], outputs: [{ id: 'l', label: 'wet L', kind: AUD }, { id: 'r', label: 'wet R', kind: AUD }],
+    params: [P('time', 'Decay', 0.2, 0.93, 0.01, 0.65), P('damp', 'Damping Hz', 800, 15000, 10, 5000, { log: true, unit: 'Hz' }), P('level', 'Wet level', 0.2, 1.99, 0.01, 1.0)],
+    gen: (c, n, ins) => {
+      const kr = cc(n.p.time), dk = f6(kPole(n.p.damp));
+      const M = (nm, s) => c.mem('rv' + n.id + nm, s).name;
+      const a1 = M('a1', 142), a2 = M('a2', 107), a3 = M('a3', 379), a4 = M('a4', 277);
+      const pL1 = M('pl1', 672), dL1 = M('dl1', 4453), pL2 = M('pl2', 1800), dL2 = M('dl2', 3720);
+      const pR1 = M('pr1', 908), dR1 = M('dr1', 4217), pR2 = M('pr2', 2656), dR2 = M('dr2', 3163);
+      const diff = c.reg(), lpL = c.reg(), lpR = c.reg(), oL = c.reg(), oR = c.reg();
+      c.c('Reverb (plate-style: 4 input allpasses + 2 cross-fed tanks)');
+      if (ins.in) c.e(`rdax ${ins.in},0.5`); else c.e('clr');
+      [[a1, 0.75], [a2, 0.75], [a3, 0.625], [a4, 0.625]].forEach(([m, k]) => { c.e(`rda ${m}#,${f6(k)}`); c.e(`wrap ${m},${f6(-k)}`); });
+      c.e(`wrax ${diff},0`);
+      const tank = (pa1, d1, pa2, d2, otherEnd, lp) => {
+        c.e(`rdax ${diff},1.0`); c.e(`rda ${otherEnd}#,${kr}`);
+        c.e(`rda ${pa1}#,0.7`); c.e(`wrap ${pa1},-0.7`);
+        c.e(`wra ${d1},0`); c.e(`rda ${d1}#,1.0`);
+        c.e(`rdfx ${lp},${dk}`); c.e(`wrax ${lp},1.0`);
+        c.e(`rda ${pa2}#,0.5`); c.e(`wrap ${pa2},-0.5`);
+        c.e(`wra ${d2},0`);
+      };
+      tank(pL1, dL1, pL2, dL2, dR2, lpL);
+      tank(pR1, dR1, pR2, dR2, dL2, lpR);
+      const lv = 0.9 * n.p.level;
+      const tap = (m, off, k) => c.e(`rda ${m}+${off},${f6(k * lv)}`);
+      tap(dL1, 300, 0.7); tap(dL1, 2900, 0.6); tap(dR1, 1800, 0.6); tap(dR2, 1500, -0.5); tap(pL2, 1200, -0.5);
+      c.e(`wrax ${oL},0`);
+      tap(dR1, 400, 0.7); tap(dR1, 2700, 0.6); tap(dL1, 2200, 0.6); tap(dL2, 1100, -0.5); tap(pR2, 900, -0.5);
+      c.e(`wrax ${oR},0`);
+      return { l: oL, r: oR };
+    },
+  },
+  chorus: {
+    title: 'Chorus / Flanger', color: '#c780ff',
+    inputs: [{ id: 'in', label: 'in', kind: AUD }, { id: 'rate', label: 'rate*', kind: CTL }], outputs: [{ id: 'out', label: 'wet', kind: AUD }],
+    params: [P('rate', 'Rate (max) Hz', 0.1, 19, 0.05, 0.8, { unit: 'Hz' }), P('depth', 'Depth ms', 0.1, 8, 0.1, 2.5, { unit: 'ms' }),
+      P('center', 'Center ms', 1, 25, 0.1, 8, { unit: 'ms' }), P('fb', 'Feedback', -0.9, 0.9, 0.01, 0)],
+    gen: (c, n, ins) => {
+      const swing = Math.max(1, Math.round(n.p.depth * 32));
+      const amp = Math.min(32000, swing * 2);                    // WLDS amplitude (swing is about +/- amp/2; kept clear even if it were +/- amp)
+      const center = Math.max(amp + 2, Math.round(n.p.center * 32));
+      const D = c.mem('chr' + n.id, center + amp + 3);
+      const l = c.lfo('Chorus'); const o = c.reg();
+      c.setup(`wlds sin${l},${kfOf(n.p.rate)},${amp}`);
+      c.c('Chorus / Flanger');
+      if (ins.rate) { c.e(`rdax ${ins.rate},${cc(Math.min(1.99, n.p.rate / MAX_LFO_HZ))}`); c.e(`wrax sin${l}_rate,0`); }
+      if (Math.abs(n.p.fb) > 0.001) c.e(`rdax ${o},${cc(n.p.fb)}`);
+      if (ins.in) c.e(`rdax ${ins.in},1.0`);
+      c.e(`wra ${D.name},0`);
+      c.e(`cho rda,sin${l},sin|reg|compc,${D.name}+${center}`);
+      c.e(`cho rda,sin${l},sin,${D.name}+${center + 1}`);
+      c.e(`wrax ${o},0`);
+      return { out: o };
+    },
+  },
+  pitch: {
+    title: 'Pitch Shift', color: '#c780ff',
+    inputs: [{ id: 'in', label: 'in', kind: AUD }, { id: 'pitch', label: 'pitch*', kind: CTL }], outputs: [{ id: 'out', label: 'wet', kind: AUD }],
+    params: [P('semis', 'Semitones', -12, 12, 1, 12, { unit: 'st' }), P('cents', 'Fine (cents)', -50, 50, 1, 0), P('win', 'Window', 0, 3, 1, 2, { select: ['512 (fast, warbly)', '1024', '2048', '4096 (smooth, laggy)'] })],
+    gen: (c, n, ins) => {
+      const amp = [512, 1024, 2048, 4096][Math.round(n.p.win)];
+      const D = c.mem('pit' + n.id, amp), T = c.mem('ptt' + n.id, 1);
+      const u = c.rmp('Pitch Shift'), o = c.reg();
+      const kOf = (st) => { const r = Math.pow(2, st / 12); return Math.max(-16384, Math.min(32767, Math.round(16384 * (r - 1)))); };
+      const k = kOf(n.p.semis + n.p.cents / 100);
+      c.setup(`wldr rmp${u},${k},${amp}`);
+      c.c('Pitch shift (two crossfaded read heads on a ramp LFO)');
+      if (ins.pitch) {
+        const lo = kOf(-Math.abs(n.p.semis)), hi = kOf(Math.abs(n.p.semis));
+        c.e(`rdax ${ins.pitch},1.0`); c.e(`sof ${f6((hi - lo) / 32768)},${f6(lo / 32768)}`); c.e(`wrax rmp${u}_rate,0`);
+      }
+      if (ins.in) c.e(`rdax ${ins.in},1.0`);
+      c.e(`wra ${D.name},0`);
+      c.e(`cho rda,rmp${u},reg|compc,${D.name}`);
+      c.e(`cho rda,rmp${u},0,${D.name}+1`);
+      c.e(`wra ${T.name},0`);
+      c.e(`cho rda,rmp${u},rptr2|compc,${D.name}`);
+      c.e(`cho rda,rmp${u},rptr2,${D.name}+1`);
+      c.e(`cho sof,rmp${u},na|compc,0`);
+      c.e(`cho rda,rmp${u},na,${T.name}`);
+      c.e(`wrax ${o},0`);
+      return { out: o };
+    },
+  },
+  lfo: {
+    title: 'LFO', color: '#ff9f43',
+    inputs: [{ id: 'rate', label: 'rate*', kind: CTL }], outputs: [{ id: 'out', label: 'out', kind: CTL }],
+    params: [P('shape', 'Shape', 0, 4, 1, 0, { select: ['Sine', 'Triangle', 'Square', 'Soft square', 'Saw (ramp)'] }),
+      P('rate', 'Rate (max) Hz', 0.1, 19, 0.05, 4, { unit: 'Hz' }), P('low', 'Low', 0, 1, 0.01, 0.0), P('high', 'High', 0, 1, 0.01, 1.0)],
+    gen: (c, n, ins) => {
+      const shape = Math.round(n.p.shape || 0), o = c.reg();
+      const lo = Math.min(n.p.low, n.p.high), hi = Math.max(n.p.low, n.p.high);
+      c.c('LFO (' + ['sine', 'triangle', 'square', 'soft square', 'saw'][shape] + ') -> control signal');
+      if (shape === 1 || shape === 4) {                          // ramp LFO based
+        const u = c.rmp('LFO'), amp = 2048;
+        const kOf = (hz) => Math.max(1, Math.min(32767, Math.round(hz * amp * 16384 / FS)));
+        c.setup(`wldr rmp${u},${kOf(n.p.rate)},${amp}`);
+        if (ins.rate) { c.e(`rdax ${ins.rate},${cc(Math.min(1.99, kOf(n.p.rate) / 32768))}`); c.e(`wrax rmp${u}_rate,0`); }
+        c.e(`cho rdal,rmp${u}`);                                  // 0..1 ramp
+        if (shape === 1) { c.e('sof 1.99993,-1.0'); c.e('absa'); }  // triangle 0..1
+        c.e(`sof ${f6(hi - lo)},${f6(Math.min(0.999, lo))}`);
+      } else {
+        const l = c.lfo('LFO');
+        c.setup(`wlds sin${l},${kfOf(n.p.rate)},32767`);
+        if (ins.rate) { c.e(`rdax ${ins.rate},${cc(Math.min(1.99, n.p.rate / MAX_LFO_HZ))}`); c.e(`wrax sin${l}_rate,0`); }
+        c.e(`cho rdal,sin${l}`);
+        if (shape === 2) gainStages(c, 64); else if (shape === 3) gainStages(c, 2.2);
+        c.e(`sof ${f6((hi - lo) / 2)},${f6(Math.min(0.999, (hi + lo) / 2))}`);
+      }
+      c.e(`wrax ${o},0`);
+      return { out: o };
+    },
+  },
+  filter: {
+    title: 'Filter', color: '#ffd166',
+    inputs: [{ id: 'in', label: 'in', kind: AUD }, { id: 'freq', label: 'freq', kind: CTL }], outputs: [{ id: 'out', label: 'out', kind: AUD }],
+    params: [P('mode', 'Mode', 0, 1, 1, 0, { select: ['Low-pass', 'High-pass'] }), P('order', 'Slope', 0, 1, 1, 0, { select: ['6 dB/oct', '12 dB/oct'] }),
+      P('hz', 'Cutoff (max) Hz', 20, 15000, 1, 1500, { log: true, unit: 'Hz' })],
+    gen: (c, n, ins) => {
+      const hp = Math.round(n.p.mode) === 1, poles = Math.round(n.p.order) === 1 ? 2 : 1;
+      c.c('Filter');
+      let sig = ins.in;
+      if (!sig) { const o = c.reg(); c.e('clr'); c.e(`wrax ${o},0`); return { out: o }; }
+      for (let i = 0; i < poles; i++) {
+        const lp = c.reg();
+        if (ins.freq) {
+          c.e(`rdax ${sig},1.0`); c.e(`rdax ${lp},-1.0`); c.e(`mulx ${ins.freq}`); c.e(`sof ${f6(kPole(n.p.hz))},0`); c.e(`rdax ${lp},1.0`); c.e(`wrax ${lp},0`);
+        } else c.onePole(sig, n.p.hz, lp);
+        if (hp) { const h = c.reg(); c.e(`rdax ${sig},1.0`); c.e(`rdax ${lp},-1.0`); c.e(`wrax ${h},0`); sig = h; } else sig = lp;
+      }
+      return { out: sig };
+    },
+  },
+  drive: {
+    title: 'Overdrive', color: '#ff6b6b',
+    inputs: [{ id: 'in', label: 'in', kind: AUD }], outputs: [{ id: 'out', label: 'out', kind: AUD }],
+    params: [P('gain', 'Drive x', 1, 32, 0.5, 8, { log: true }), P('bias', 'Asymmetry', -0.4, 0.4, 0.01, 0), P('tone', 'Tone Hz', 500, 15000, 10, 3500, { log: true, unit: 'Hz' }), P('level', 'Level', 0, 1.99, 0.01, 0.5)],
+    gen: (c, n, ins) => {
+      const o = c.reg(), lp = c.reg();
+      c.c('Overdrive (hard clip through accumulator saturation)');
+      if (!ins.in) { c.e('clr'); c.e(`wrax ${o},0`); return { out: o }; }
+      c.e(`rdax ${ins.in},1.0`);
+      let rem = Math.max(1, n.p.gain), first = true;
+      const bias = Math.max(-0.99, Math.min(0.99, n.p.bias));
+      while (rem > 1.9999) { c.e(`sof 1.99993,${first ? f6(bias) : '0'}`); first = false; rem /= 1.99993; }
+      if (rem > 1.001 || first) c.e(`sof ${cc(rem)},${first ? f6(bias) : '0'}`);
+      c.e(`rdfx ${lp},${f6(kPole(n.p.tone))}`); c.e(`wrax ${lp},0`);
+      c.e(`rdax ${lp},${cc(n.p.level)}`); c.e(`wrax ${o},0`);
+      return { out: o };
+    },
+  },
+  smooth: {
+    title: 'Smooth (ctl)', color: '#ff9f43',
+    inputs: [{ id: 'in', label: 'in', kind: CTL }], outputs: [{ id: 'out', label: 'out', kind: CTL }],
+    params: [P('hz', 'Smoothing Hz', 0.2, 30, 0.1, 3, { unit: 'Hz' })],
+    gen: (c, n, ins) => {
+      const o = c.reg(); c.c('Control smoothing');
+      if (!ins.in) { c.e('clr'); c.e(`wrax ${o},0`); return { out: o }; }
+      c.e(`rdax ${ins.in},1.0`); c.e(`rdfx ${o},${f6(kPole(n.p.hz))}`); c.e(`wrax ${o},0`);
+      return { out: o };
+    },
+  },
+};
+
+
+// ---------- shared DSP helpers for the dynamics / filter / distortion blocks ----------
+function gainStages(c, g) {                     // multiply ACC by g (>=1) with saturating SOF stages
+  let rem = Math.max(1, g);
+  while (rem > 1.9999) { c.e('sof 1.99993,0'); rem /= 1.99993; }
+  if (rem > 1.001) c.e(`sof ${cc(rem)},0`);
+}
+let labelSeq = 0;
+function envFollow(c, sig, atkMs, relMs) {      // rectifier + attack/release smoothing; returns env register
+  const env = c.reg(), k = ++labelSeq;
+  const a = Math.max(1 / 16384, 1 - Math.exp(-1 / (FS * atkMs / 1000))), r = Math.max(1 / 16384, 1 - Math.exp(-1 / (FS * relMs / 1000)));
+  c.e(`rdax ${sig},1.0`); c.e('absa'); c.e(`rdax ${env},-1.0`);
+  c.e(`skp neg,rel${k}`); c.e(`sof ${f6(a)},0`); c.e(`skp 0,dn${k}`);
+  c.e(`rel${k}:`); c.e(`sof ${f6(r)},0`);
+  c.e(`dn${k}:`); c.e(`rdax ${env},1.0`); c.e(`wrax ${env},0`);
+  return env;
+}
+function hpf(c, sig, hz) {                      // one-pole high-pass: in - lowpass(in)
+  const lp = c.onePole(sig, hz), h = c.reg();
+  c.e(`rdax ${sig},1.0`); c.e(`rdax ${lp},-1.0`); c.e(`wrax ${h},0`);
+  return h;
+}
+function svf(c, sig, o) {                       // state-variable filter (Chamberlin). o: {hz, ctl, curve, Q}
+  const low = c.reg(), band = c.reg(), high = c.reg();
+  const q = Math.min(1.99, 1 / Math.max(0.5, o.Q));
+  const fmax = Math.min(1.5, 2 * Math.sin(Math.PI * Math.min(o.hz, 6000) / FS));
+  let FR = null;
+  if (o.ctl) {
+    FR = c.reg();
+    const fmin = Math.min(fmax * 0.9, 2 * Math.sin(Math.PI * Math.min(o.minhz || 0, 6000) / FS));
+    c.e(`rdax ${o.ctl},1.0`); if (o.curve) c.e(`mulx ${o.ctl}`);
+    c.e(`sof ${f6((fmax - fmin) / 2)},${f6(fmin / 2)}`); c.e(`wrax ${FR},0`);
+  }
+  const mulF = () => { if (FR) { c.e(`mulx ${FR}`); c.e('sof 1.99993,0'); } else c.e(`sof ${f6(fmax)},0`); };
+  c.e(`rdax ${sig},1.0`); c.e(`rdax ${low},-1.0`); c.e(`rdax ${band},${cc(-q)}`); c.e(`wrax ${high},1.0`);
+  mulF(); c.e(`rdax ${band},1.0`); c.e(`wrax ${band},1.0`);
+  mulF(); c.e(`rdax ${low},1.0`); c.e(`wrax ${low},0`);
+  return { low, band, high, q };
+}
+
+Object.assign(NODE_TYPES, {
+  env: {
+    title: 'Envelope', color: '#ff9f43',
+    inputs: [{ id: 'in', label: 'in', kind: AUD }], outputs: [{ id: 'out', label: 'level', kind: CTL }],
+    params: [P('atk', 'Attack ms', 1, 80, 1, 5, { unit: 'ms' }), P('rel', 'Release ms', 20, 1500, 1, 180, { log: true, unit: 'ms' }), P('gain', 'Gain x', 1, 40, 0.5, 6, { log: true })],
+    gen: (c, n, ins) => {
+      const o = c.reg(); c.c('Envelope follower -> control signal');
+      if (!ins.in) { c.e('clr'); c.e(`wrax ${o},0`); return { out: o }; }
+      const env = envFollow(c, ins.in, n.p.atk, n.p.rel);
+      c.e(`rdax ${env},1.0`); gainStages(c, n.p.gain); c.e(`wrax ${o},0`);
+      return { out: o };
+    },
+  },
+  gate: {
+    title: 'Noise Gate', color: '#7bd88f',
+    inputs: [{ id: 'in', label: 'in', kind: AUD }], outputs: [{ id: 'out', label: 'out', kind: AUD }],
+    params: [P('thr', 'Threshold', 0.002, 0.3, 0.001, 0.008, { log: true }), P('rel', 'Hold/release ms', 10, 800, 1, 120, { log: true, unit: 'ms' }), P('floor', 'Closed level', 0, 0.5, 0.01, 0)],
+    gen: (c, n, ins) => {
+      const o = c.reg(), gs = c.reg(); c.c('Noise gate');
+      if (!ins.in) { c.e('clr'); c.e(`wrax ${o},0`); return { out: o }; }
+      const env = envFollow(c, ins.in, 1, n.p.rel);
+      c.e(`rdax ${env},1.0`); c.e(`sof 1.0,${f6(-Math.min(0.99, n.p.thr))}`);
+      gainStages(c, Math.min(64, 1 / (n.p.thr * 0.6)));
+      c.e('skp gez,1'); c.e('clr');
+      c.e(`rdfx ${gs},${f6(kPole(120))}`); c.e(`wrax ${gs},1.0`);
+      if (n.p.floor > 0.004) c.e(`sof ${cc(1 - n.p.floor)},${f6(Math.min(0.999, n.p.floor))}`);
+      c.e(`wrax ${gs},0`);
+      // gs holds the smoothed gate but may have been rewritten with the floor; use the register as the multiplier
+      c.e(`rdax ${ins.in},1.0`); c.e(`mulx ${gs}`); c.e(`wrax ${o},0`);
+      return { out: o };
+    },
+  },
+  comp: {
+    title: 'Compressor', color: '#7bd88f',
+    inputs: [{ id: 'in', label: 'in', kind: AUD }], outputs: [{ id: 'out', label: 'out', kind: AUD }],
+    params: [P('thr', 'Threshold dB', -50, -3, 1, -24, { unit: 'dB' }), P('ratio', 'Ratio', 1.5, 20, 0.5, 4), P('atk', 'Attack ms', 1, 100, 1, 8, { unit: 'ms' }),
+      P('rel', 'Release ms', 30, 1500, 1, 250, { log: true, unit: 'ms' }), P('mk', 'Makeup dB', 0, 24, 1, 6, { unit: 'dB' })],
+    gen: (c, n, ins) => {
+      const o = c.reg(); c.c('Compressor (envelope -> LOG -> gain computer -> EXP)');
+      if (!ins.in) { c.e('clr'); c.e(`wrax ${o},0`); return { out: o }; }
+      const env = envFollow(c, ins.in, n.p.atk, n.p.rel);
+      const Lt = n.p.thr / 20 * Math.log2(10) / 16;               // threshold in the chip's log2/16 domain
+      c.e(`rdax ${env},1.0`); c.e('log 1.0,0'); c.e(`sof 1.0,${f6(-Lt)}`);
+      c.e('skp gez,1'); c.e('clr');                              // only the part above the threshold
+      c.e(`sof ${cc(-(1 - 1 / n.p.ratio))},0`); c.e('exp 1.0,0');
+      const G = c.reg(); c.e(`wrax ${G},0`);
+      c.e(`rdax ${ins.in},1.0`); c.e(`mulx ${G}`); gainStages(c, Math.pow(10, n.p.mk / 20)); c.e(`wrax ${o},0`);
+      return { out: o };
+    },
+  },
+  svf: {
+    title: 'Resonant Filter', color: '#ffd166',
+    inputs: [{ id: 'in', label: 'in', kind: AUD }, { id: 'freq', label: 'freq', kind: CTL }], outputs: [{ id: 'out', label: 'out', kind: AUD }],
+    params: [P('mode', 'Mode', 0, 3, 1, 1, { select: ['Low-pass', 'Band-pass', 'High-pass', 'Notch'] }), P('hz', 'Freq (max) Hz', 80, 6000, 1, 1800, { log: true, unit: 'Hz' }),
+      P('minhz', 'Freq (min) Hz', 20, 2000, 1, 300, { log: true, unit: 'Hz' }), P('q', 'Resonance Q', 0.7, 20, 0.1, 5, { log: true }), P('curve', 'Freq ctl curve', 0, 1, 1, 1, { select: ['Linear', 'Squared (wah-like)'] }),
+      P('lvl', 'Output boost x', 1, 8, 0.5, 2.5)],
+    gen: (c, n, ins) => {
+      const o = c.reg(); c.c('Resonant state-variable filter');
+      if (!ins.in) { c.e('clr'); c.e(`wrax ${o},0`); return { out: o }; }
+      const f = svf(c, ins.in, { hz: n.p.hz, minhz: n.p.minhz === undefined ? 300 : n.p.minhz, ctl: ins.freq, curve: Math.round(n.p.curve), Q: n.p.q });
+      const m = Math.round(n.p.mode), lv = n.p.lvl === undefined ? 1 : n.p.lvl;
+      if (m === 0) c.e(`rdax ${f.low},1.0`);
+      else if (m === 2) c.e(`rdax ${f.high},1.0`);
+      else if (m === 1) c.e(`rdax ${f.band},${cc(f.q)}`);
+      else { c.e(`rdax ${f.high},1.0`); c.e(`rdax ${f.low},1.0`); }
+      gainStages(c, lv); c.e(`wrax ${o},0`);
+      return { out: o };
+    },
+  },
+  phaser: {
+    title: 'Phaser', color: '#c780ff',
+    inputs: [{ id: 'in', label: 'in', kind: AUD }, { id: 'rate', label: 'rate*', kind: CTL }], outputs: [{ id: 'out', label: 'out', kind: AUD }],
+    params: [P('stages', 'Stages', 0, 2, 1, 1, { select: ['2 (mild)', '4 (classic)', '6 (deep)'] }), P('rate', 'Rate (max) Hz', 0.05, 19, 0.05, 0.5, { unit: 'Hz' }),
+      P('depth', 'Depth', 0.1, 1, 0.01, 0.8), P('fb', 'Feedback', -0.85, 0.85, 0.01, 0.3), P('mix', 'Mix', 0, 1, 0.01, 0.5)],
+    gen: (c, n, ins) => {
+      const k = [2, 4, 6][Math.round(n.p.stages)];
+      const l = c.lfo('Phaser'), A = c.reg(), o = c.reg();
+      const ys = [], xs = [];
+      for (let i = 0; i < k; i++) { ys.push(c.reg()); xs.push(c.reg()); }
+      c.setup(`wlds sin${l},${kfOf(n.p.rate)},32767`);
+      c.c('Phaser (' + k + ' first-order allpass stages)');
+      if (!ins.in) { c.e('clr'); c.e(`wrax ${o},0`); return { out: o }; }
+      const lo = 0.1, hi = 0.1 + 0.85 * n.p.depth;
+      if (ins.rate) { c.e(`rdax ${ins.rate},${cc(Math.min(1.99, n.p.rate / MAX_LFO_HZ))}`); c.e(`wrax sin${l}_rate,0`); }
+      c.e(`cho rdal,sin${l}`); c.e(`sof ${f6((hi - lo) / 2)},${f6((hi + lo) / 2)}`); c.e(`wrax ${A},0`);
+      let sig = ins.in;
+      if (Math.abs(n.p.fb) > 0.001) { const s0 = c.reg(); c.e(`rdax ${ins.in},1.0`); c.e(`rdax ${ys[k - 1]},${cc(n.p.fb)}`); c.e(`wrax ${s0},0`); sig = s0; }
+      for (let i = 0; i < k; i++) {                     // y = a*(x - y1) + x1
+        c.e(`rdax ${sig},1.0`); c.e(`rdax ${ys[i]},-1.0`); c.e(`mulx ${A}`); c.e(`rdax ${xs[i]},1.0`); c.e(`wrax ${ys[i]},0`);
+        c.e(`rdax ${sig},1.0`); c.e(`wrax ${xs[i]},0`);
+        sig = ys[i];
+      }
+      c.e(`rdax ${ins.in},${cc(1 - n.p.mix)}`); c.e(`rdax ${ys[k - 1]},${cc(n.p.mix)}`); c.e(`wrax ${o},0`);
+      return { out: o };
+    },
+  },
+  metal: {
+    title: 'Metal Dist (Fromel-style)', color: '#ff6b6b',
+    inputs: [{ id: 'in', label: 'in', kind: AUD }, { id: 'midf', label: 'mid freq', kind: CTL }], outputs: [{ id: 'out', label: 'out', kind: AUD }],
+    params: [P('trim', 'Input boost x', 1, 8, 0.5, 2), P('dist', 'Distortion x', 2, 80, 0.5, 40, { log: true }), P('tight', 'Tightness Hz', 40, 400, 1, 110, { log: true, unit: 'Hz' }), P('fizz', 'Fizz tame Hz', 2000, 9000, 10, 4200, { log: true, unit: 'Hz' }),
+      P('low', 'Low', -1, 1, 0.01, 0.2), P('mid', 'Mid', -1, 1, 0.01, 0.1), P('high', 'High', -1, 1, 0.01, -0.15),
+      P('midhz', 'Mid freq (max) Hz', 200, 5000, 1, 900, { log: true, unit: 'Hz' }), P('level', 'Level', 0, 1.99, 0.01, 0.8)],
+    gen: (c, n, ins) => {
+      const o = c.reg(); c.c('Metal distortion: 4 cascaded soft-clip stages with coupling filters, tame highs, usable 3-band EQ');
+      if (!ins.in) { c.e('clr'); c.e(`wrax ${o},0`); return { out: o }; }
+      const t = c.reg(), y = c.reg();
+      const per = Math.min(1.99, Math.max(0.4, Math.pow(n.p.dist, 0.25) / 1.5));
+      const stage = () => {                           // gain, then smooth limiter 1.5x - 0.5x^3
+        c.e(`sof ${cc(per)},0`); c.e(`wrax ${t},1.0`); c.e(`mulx ${t}`); c.e(`mulx ${t}`); c.e('sof -0.5,0'); c.e(`rdax ${t},1.5`);
+      };
+      const h1 = hpf(c, ins.in, n.p.tight);
+      c.e(`rdax ${h1},1.0`); gainStages(c, n.p.trim === undefined ? 1 : n.p.trim); stage(); stage();
+      const s1 = c.reg(); c.e(`wrax ${s1},0`);
+      const lp1 = c.onePole(s1, 6500);
+      const h2 = hpf(c, lp1, 160);                    // drop the mud between stages (keeps it tight)
+      c.e(`rdax ${h2},1.0`); stage(); stage();
+      const s3 = c.reg(); c.e(`wrax ${s3},0`);
+      const lp2 = c.onePole(s3, n.p.fizz);            // tame the harsh top end
+      c.e(`rdax ${lp2},0.5`); c.e(`wrax ${y},0`);
+      // 3-band EQ: low shelf, sweepable mid peak, high shelf
+      const L = n.p.low, M = n.p.mid, H = n.p.high;
+      const lowLP = Math.abs(L) > 0.01 ? c.onePole(y, 130) : null;
+      const hiLP = Math.abs(H) > 0.01 ? c.onePole(y, 3200) : null;
+      const sv = Math.abs(M) > 0.01 ? svf(c, y, { hz: n.p.midhz, ctl: ins.midf, curve: 0, Q: 1.4 }) : null;
+      c.e(`rdax ${y},1.0`);
+      if (lowLP) c.e(`rdax ${lowLP},${cc(L)}`);
+      if (hiLP) { c.e(`rdax ${y},${cc(H)}`); c.e(`rdax ${hiLP},${cc(-H)}`); }
+      if (sv) c.e(`rdax ${sv.band},${cc(M * 1.5 * sv.q)}`);
+      c.e(`sof ${cc(n.p.level)},0`); c.e(`wrax ${o},0`);
+      return { out: o };
+    },
+  },
+});
+
+Object.assign(NODE_TYPES, {
+  ringmod: {
+    title: 'Ring Mod', color: '#c780ff',
+    inputs: [{ id: 'in', label: 'in', kind: AUD }, { id: 'freq', label: 'freq', kind: CTL }], outputs: [{ id: 'out', label: 'out', kind: AUD }],
+    params: [P('hz', 'Carrier (max) Hz', 20, 4500, 1, 440, { log: true, unit: 'Hz' }), P('mix', 'Mix', 0, 1, 0.01, 0.7)],
+    gen: (c, n, ins) => {
+      const o = c.reg(); c.c('Ring modulator (audio-rate quadrature oscillator)');
+      if (!ins.in) { c.e('clr'); c.e(`wrax ${o},0`); return { out: o }; }
+      const X = c.reg(), Y = c.reg();
+      const e = Math.min(0.99, 2 * Math.sin(Math.PI * n.p.hz / FS));
+      c.setup('sof 0.0,0.45'); c.setup(`wrax ${X},0`);
+      if (ins.freq) {
+        const E = c.reg();
+        c.e(`rdax ${ins.freq},1.0`); c.e(`sof ${f6(e)},0`); c.e(`wrax ${E},0`);
+        c.e(`rdax ${Y},1.0`); c.e(`mulx ${E}`); c.e(`rdax ${X},1.0`); c.e(`wrax ${X},0`);
+        c.e(`rdax ${X},1.0`); c.e(`mulx ${E}`); c.e('sof -1.0,0'); c.e(`rdax ${Y},1.0`); c.e(`wrax ${Y},0`);
+      } else {
+        c.e(`rdax ${Y},${f6(e)}`); c.e(`rdax ${X},1.0`); c.e(`wrax ${X},0`);
+        c.e(`rdax ${X},${f6(-e)}`); c.e(`rdax ${Y},1.0`); c.e(`wrax ${Y},0`);
+      }
+      c.e(`rdax ${ins.in},1.0`); c.e(`mulx ${X}`); gainStages(c, 2.2 * 1.0); c.e(`sof ${cc(n.p.mix)},0`);
+      c.e(`rdax ${ins.in},${cc(1 - n.p.mix)}`); c.e(`wrax ${o},0`);
+      return { out: o };
+    },
+  },
+  crush: {
+    title: 'Bit Crusher', color: '#ff6b6b',
+    inputs: [{ id: 'in', label: 'in', kind: AUD }], outputs: [{ id: 'out', label: 'out', kind: AUD }],
+    params: [P('bits', 'Bits', 2, 12, 1, 5), P('pre', 'Input boost x', 1, 16, 1, 4), P('mix', 'Mix', 0, 1, 0.01, 1), P('tone', 'Smooth Hz', 1000, 15000, 10, 7000, { log: true, unit: 'Hz' })],
+    gen: (c, n, ins) => {
+      const o = c.reg(); c.c('Bit crusher: boost, truncate to N bits (AND mask), attenuate, smooth');
+      if (!ins.in) { c.e('clr'); c.e(`wrax ${o},0`); return { out: o }; }
+      const bits = Math.round(n.p.bits), mask = (0xffffff & ~((1 << (24 - bits)) - 1)) >>> 0;
+      const pre = Math.round(n.p.pre), t = c.reg();
+      c.e(`rdax ${ins.in},1.0`); gainStages(c, pre);
+      c.e(`and $${mask.toString(16).padStart(6, '0')}`);
+      c.e(`sof ${f6(1 / pre > 0.0001 ? Math.min(1, 1 / pre) : 1)},0`);
+      c.e(`wrax ${t},0`);
+      const lp = c.onePole(t, n.p.tone);
+      c.e(`rdax ${lp},${cc(n.p.mix)}`); c.e(`rdax ${ins.in},${cc(1 - n.p.mix)}`); c.e(`wrax ${o},0`);
+      return { out: o };
+    },
+  },
+});
+
+// ---------- human-readable help for tooltips ----------
+const DESC = {
+  input: 'Audio coming into the pedal (the FV-1 has a stereo ADC; guitar is usually the L channel).',
+  output: 'Audio leaving the pedal (stereo DAC). Wire your final signal here. If you only connect L, it is copied to both sides.',
+  pot: 'One of the three pedal knobs (POT0, POT1, POT2) as a 0–1 control signal. Drag its output onto any orange "control" input.',
+  gain: 'Volume control. With a control signal connected to "ctl" it becomes a VCA (e.g. LFO → tremolo, envelope → auto-swell).',
+  mixer: 'Adds up to three audio signals with an individual level for each.',
+  xfade: 'Dry/wet blend. Plug the clean signal into "dry", the effect into "wet" and optionally a Pot into "mix".',
+  delay: 'Echo with feedback and damping. Output is the wet echoes only; blend with Dry/Wet. A Pot on "time" sweeps the delay time.',
+  reverb: 'Stereo plate-style reverb. Outputs are the wet signal only; blend with Dry/Wet.',
+  chorus: 'Modulated short delay: chorus, vibrato or flanger depending on settings. Wet only; blend with Dry/Wet.',
+  pitch: 'Pitch shifter with two crossfaded read heads. Wet only; blend with Dry/Wet. Short windows are fast but warbly.',
+  drive: 'Simple hard-clipping overdrive (gain, clip, tone, level).',
+  filter: 'Basic 6 or 12 dB/octave low-pass or high-pass filter.',
+  lfo: 'Slow oscillator (sine, triangle, square, soft square or saw) producing a control signal. Use for tremolo, wobble, sweeps.',
+  smooth: 'Smooths a control signal (such as a Pot) to avoid zipper noise.',
+  env: 'Envelope follower: turns how loud you play into a control signal. Plug into a filter\'s freq for auto-wah, or a Gain "ctl" for swells.',
+  gate: 'Noise gate: mutes the signal when it falls below the threshold. Place it early in the chain, before big gain.',
+  comp: 'Compressor with threshold, ratio, attack/release and makeup gain. Evens out dynamics and adds sustain.',
+  svf: 'Resonant filter (low/band/high-pass/notch). Plug a Pot or Envelope into "freq" for wah / auto-wah.',
+  phaser: 'Classic swirling phaser built from allpass stages swept by an LFO.',
+  ringmod: 'Ring modulator: multiplies your guitar by an oscillator for metallic, bell-like tones. A Pot on "freq" sweeps the carrier.',
+  crush: 'Bit crusher: lo-fi quantization. Fewer bits = grittier. Boost the input so quiet notes still use the steps.',
+  metal: 'High-gain distortion inspired by a heavily modded Metal Zone: smooth amp-like clipping, tight low end, tamed fizz, three-band EQ with a sweepable mid.',
+};
+const GENERIC_PORT = {
+  'in:audio': 'AUDIO input (blue). Drop an audio output here: Input L/R, or the output of any effect or Gain/Mixer block.',
+  'in:ctl': 'CONTROL input (orange, optional). Drop a control output here: a Pot, LFO, Envelope or Smooth block. When empty, the number on the block is used.',
+  'out:audio': 'AUDIO output (blue). Drag from this dot to an input dot on another block (left side). One output can feed several inputs.',
+  'out:ctl': 'CONTROL output (orange, 0–1). Drag it to a control input (orange dot), such as a "time", "freq", "mix" or "ctl" input.',
+};
+const PORT_TIPS = {
+  'delay.time': 'Optional. A Pot here sweeps the delay time from about 1 ms up to the "Time (max)" setting.',
+  'delay.fb': 'Optional. A control signal here scales the feedback (repeats) up to the "Feedback" setting.',
+  'delay.out': 'Echoes only (no dry signal). Send to a Dry/Wet "wet" input or a Mixer.',
+  'reverb.l': 'Reverb, left. Send to Output L (or a Dry/Wet "wet").', 'reverb.r': 'Reverb, right. Send to Output R (or a Dry/Wet "wet").',
+  'chorus.rate': 'Optional. A Pot here sets LFO speed up to "Rate (max)". (*Rate registers are modeled, not yet bench-verified.)',
+  'phaser.rate': 'Optional. A Pot here sets LFO speed up to "Rate (max)".',
+  'lfo.rate': 'Optional. A Pot here sets LFO speed up to "Rate (max)".',
+  'pitch.pitch': 'Optional. A Pot here sweeps the shift between −N and +N semitones (N = the Semitones setting); not centered on unity.',
+  'xfade.a': 'DRY signal (plug the clean signal here).', 'xfade.b': 'WET signal (plug the effect output here).', 'xfade.ctl': 'Optional. A Pot here sets the dry/wet balance (0 = all dry, 1 = all wet).',
+  'gain.ctl': 'Optional. A control signal here multiplies the audio (VCA). LFO → tremolo, Envelope → swell.',
+  'svf.freq': 'Optional. A Pot (wah pedal) or Envelope (auto-wah) here sweeps the cutoff up to the "Freq (max)" setting.',
+  'filter.freq': 'Optional. A Pot here sweeps the cutoff up to the "Cutoff (max)" setting.',
+  'ringmod.freq': 'Optional. A Pot or Envelope here sweeps the carrier frequency up to "Carrier (max)".',
+  'metal.midf': 'Optional. A Pot here sweeps the mid-EQ centre frequency (like the sweepable mid on a Metal Zone).',
+  'env.out': 'Control signal that follows your playing level. Connect to a "freq", "ctl" or "mix" input.',
+  'pot.out': 'Pedal knob as a 0–1 control signal. Drag to any orange input.',
+  'smooth.in': 'CONTROL input: plug a Pot or other control signal to be smoothed.',
+  'input.l': 'Left (guitar) input, audio.', 'input.r': 'Right input, audio.',
+  'output.l': 'Left output. Drop your final audio here.', 'output.r': 'Right output. If left empty, L is copied to R.',
+};
+function portTip(type, dir, port) {
+  const def = NODE_TYPES[type], list = dir === 'in' ? def.inputs : def.outputs, pd = list.find((p) => p.id === port);
+  const spec = PORT_TIPS[type + '.' + port];
+  const g = GENERIC_PORT[dir + ':' + (pd ? pd.kind : 'audio')];
+  return (spec ? spec + '\n' : '') + g;
+}
+
+function defaultParams(type) {
+  const p = {}; NODE_TYPES[type].params.forEach((d) => { p[d.id] = d.def; }); return p;
+}
+
+// graph: {nodes:[{id,type,x,y,p}], edges:[{a:'n1.out', b:'n2.in'}]}
+// ---------- optimizer: peephole + register sharing ----------
+function optimize(code, setup, keep) {
+  let lines = code.slice(), removed = 0;
+  const isLabelOrComment = (l) => /^\s*;/.test(l) || /:\s*$/.test(l);
+  // 1) wrax r,0 ; rdax r,1.0  ->  wrax r,1.0   2) wrax r,0 ; clr  ->  wrax r,0
+  for (let pass = 0; pass < 2; pass++) {
+    const out = [];
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i], prev = out.length ? out[out.length - 1] : null;
+      const mw = prev && /^wrax\s+(\w+)\s*,\s*0(\.0+)?\s*$/i.exec(prev);
+      if (mw && !isLabelOrComment(l)) {
+        if (/^clr\s*$/i.test(l)) { removed++; continue; }
+        const mr = new RegExp('^rdax\\s+' + mw[1] + '\\s*,\\s*1(\\.0+)?\\s*$', 'i').exec(l);
+        if (mr) { out[out.length - 1] = 'wrax ' + mw[1] + ',1.0'; removed++; continue; }
+      }
+      out.push(l);
+    }
+    lines = out;
+  }
+  // 2) share temp registers whose live ranges do not overlap
+  const rx = /\bREG(\d+)\b/g, first = {}, lastU = {}, firstIsWrite = {};
+  lines.forEach((l, i) => {
+    if (isLabelOrComment(l)) return;
+    const wr = /^\s*(wrax|wrhx|wrlx)\b/i.test(l);
+    let m; rx.lastIndex = 0;
+    while ((m = rx.exec(l))) { const r = 'REG' + m[1]; if (!(r in first)) { first[r] = i; firstIsWrite[r] = wr; } lastU[r] = i; }
+  });
+  (setup || []).forEach((l) => { const m = l.match(/\bREG\d+\b/g); if (m) m.forEach((r) => { firstIsWrite[r] = false; }); });
+  const temps = Object.keys(first).filter((r) => firstIsWrite[r] && !keep.has(r)).sort((x, y) => first[x] - first[y]);
+  const pool = [], map = {}; let saved = 0;
+  temps.forEach((r) => {
+    const slot = pool.find((q) => q.end < first[r]);
+    if (slot) { map[r] = slot.name; slot.end = lastU[r]; saved++; } else pool.push({ name: r, end: lastU[r] });
+  });
+  if (saved) lines = lines.map((l) => isLabelOrComment(l) ? l : l.replace(/\bREG\d+\b/g, (r) => map[r] || r));
+  return { code: lines, removed, saved, map };
+}
+
+function generate(graph, opts) {
+  opts = opts || {};
+  const errors = [];
+  const byId = {}; graph.nodes.forEach((n) => { byId[n.id] = n; });
+  const outNode = graph.nodes.find((n) => n.type === 'output');
+  if (!outNode) return { asm: '', errors: ['Add an Output node.'], stats: {} };
+  const incoming = (nid, port) => {
+    const e = graph.edges.find((x) => x.b === nid + '.' + port);
+    return e ? e.a.split('.') : null;
+  };
+  const c = new Ctx();
+  const done = {}, visiting = {};
+  function build(n) {
+    if (done[n.id]) return done[n.id];
+    if (visiting[n.id]) throw new Error('Feedback loop through "' + NODE_TYPES[n.type].title + '". Use a Delay node feedback instead of a cable loop.');
+    visiting[n.id] = true;
+    const def = NODE_TYPES[n.type];
+    const ins = {};
+    def.inputs.forEach((ip) => {
+      const src = incoming(n.id, ip.id);
+      if (src && byId[src[0]]) { const so = build(byId[src[0]]); ins[ip.id] = so[src[1]] || null; } else ins[ip.id] = null;
+    });
+    const outs = def.gen(c, n, ins) || {};
+    visiting[n.id] = false; done[n.id] = outs; return outs;
+  }
+  try { build(outNode); } catch (e) { return { asm: '', errors: [e.message], stats: {} }; }
+  // level taps: the first register-valued output of each block
+  const taps = {}, keep = new Set();
+  Object.keys(done).forEach((id) => {
+    const o = done[id], k = Object.keys(o).find((x) => /^REG\d+$/.test(o[x]));
+    if (k) { taps[id] = o[k]; keep.add(o[k]); }
+  });
+  let code = c.code, stats = { regs: c.regN, memTop: c.memTop };
+  if (opts.optimize !== false) {
+    const r = optimize(c.code, c.setupLines, keep);
+    code = r.code;
+    const used = new Set((code.join('\n').match(/\bREG\d+\b/g) || []));
+    stats.regsBefore = c.regN; stats.regs = used.size; stats.saved = r.removed; stats.regsSaved = r.saved;
+  }
+  const hdr = ['; Generated by FV-1 Studio', '; FV-1 @ 32 kHz'];
+  let asm = hdr.join('\n') + '\n';
+  if (c.memLines.length) asm += '\n' + c.memLines.join('\n') + '\n';
+  if (c.setupLines.length) asm += '\nskp run,setup_done\n' + c.setupLines.join('\n') + '\nsetup_done:\n';
+  asm += '\n' + code.join('\n') + '\n';
+  // pot usage legend: which blocks each knob feeds
+  const legend = [[], [], []];
+  graph.nodes.filter((n) => n.type === 'pot').forEach((pn) => {
+    graph.edges.filter((e) => e.a.startsWith(pn.id + '.')).forEach((e) => {
+      const [tid, tp] = e.b.split('.'), t = byId[tid]; if (!t) return;
+      const pd = NODE_TYPES[t.type].inputs.find((x) => x.id === tp);
+      legend[Math.round(pn.p.pot)].push(NODE_TYPES[t.type].title + (pd ? ' ' + pd.label.replace('*', '') : ''));
+    });
+  });
+  return { asm, errors, stats, taps, legend };
+}
+
+// ---------- presets ----------
+const N = (id, type, x, y, p) => ({ id, type, x, y, p: Object.assign(defaultParams(type), p || {}) });
+const PRESETS = {
+  'Clean (pass-through)': {
+    nodes: [N('n1', 'input', 20, 20), N('n2', 'output', 260, 20)],
+    edges: [{ a: 'n1.l', b: 'n2.l' }],
+  },
+  'Echo': {
+    nodes: [N('n1', 'input', 10, 20), N('n2', 'delay', 230, 10, { time: 600, fb: 0.55, damp: 3500 }), N('n3', 'xfade', 450, 20), N('n4', 'output', 670, 20),
+      N('p0', 'pot', 10, 230, { pot: 0 }), N('p1', 'pot', 10, 320, { pot: 1 }), N('p2', 'pot', 450, 230, { pot: 2 })],
+    edges: [{ a: 'n1.l', b: 'n2.in' }, { a: 'n1.l', b: 'n3.a' }, { a: 'n2.out', b: 'n3.b' }, { a: 'n3.out', b: 'n4.l' },
+      { a: 'p0.out', b: 'n2.time' }, { a: 'p1.out', b: 'n2.fb' }, { a: 'p2.out', b: 'n3.ctl' }],
+  },
+  'Plate Reverb': {
+    nodes: [N('n1', 'input', 10, 100), N('n2', 'reverb', 230, 10), N('n3', 'xfade', 450, 10, { mix: 0.35 }), N('n4', 'xfade', 450, 230, { mix: 0.35 }), N('n5', 'output', 670, 100),
+      N('p2', 'pot', 230, 330, { pot: 2 })],
+    edges: [{ a: 'n1.l', b: 'n2.in' }, { a: 'n1.l', b: 'n3.a' }, { a: 'n1.l', b: 'n4.a' }, { a: 'n2.l', b: 'n3.b' }, { a: 'n2.r', b: 'n4.b' },
+      { a: 'n3.out', b: 'n5.l' }, { a: 'n4.out', b: 'n5.r' }, { a: 'p2.out', b: 'n3.ctl' }, { a: 'p2.out', b: 'n4.ctl' }],
+  },
+  'Chorus': {
+    nodes: [N('n1', 'input', 10, 20), N('n2', 'chorus', 230, 10, { rate: 0.8, depth: 2.5, center: 8 }), N('n3', 'xfade', 450, 20, { mix: 0.5 }), N('n4', 'output', 670, 20),
+      N('p0', 'pot', 10, 230, { pot: 0 }), N('p2', 'pot', 450, 230, { pot: 2 })],
+    edges: [{ a: 'n1.l', b: 'n2.in' }, { a: 'n1.l', b: 'n3.a' }, { a: 'n2.out', b: 'n3.b' }, { a: 'n3.out', b: 'n4.l' }, { a: 'p0.out', b: 'n2.rate' }, { a: 'p2.out', b: 'n3.ctl' }],
+  },
+  'Octave Up': {
+    nodes: [N('n1', 'input', 10, 20), N('n2', 'pitch', 230, 10, { semis: 12, win: 2 }), N('n3', 'xfade', 450, 20, { mix: 0.5 }), N('n4', 'output', 670, 20), N('p2', 'pot', 450, 230, { pot: 2 })],
+    edges: [{ a: 'n1.l', b: 'n2.in' }, { a: 'n1.l', b: 'n3.a' }, { a: 'n2.out', b: 'n3.b' }, { a: 'n3.out', b: 'n4.l' }, { a: 'p2.out', b: 'n3.ctl' }],
+  },
+  'Whammy (POT0 = pitch)': {
+    nodes: [N('n1', 'input', 10, 20), N('n2', 'pitch', 230, 10, { semis: 12, win: 1 }), N('n3', 'xfade', 450, 20, { mix: 1 }), N('n4', 'output', 670, 20), N('p0', 'pot', 10, 230, { pot: 0 }), N('p2', 'pot', 450, 230, { pot: 2 })],
+    edges: [{ a: 'n1.l', b: 'n2.in' }, { a: 'n1.l', b: 'n3.a' }, { a: 'n2.out', b: 'n3.b' }, { a: 'n3.out', b: 'n4.l' }, { a: 'p0.out', b: 'n2.pitch' }, { a: 'p2.out', b: 'n3.ctl' }],
+  },
+  'Auto-Wah': {
+    nodes: [N('n1', 'input', 10, 20), N('n2', 'env', 10, 150, { atk: 5, rel: 200, gain: 10 }), N('n3', 'svf', 230, 10, { mode: 1, hz: 2200, minhz: 250, q: 6, curve: 0 }), N('n4', 'xfade', 450, 20, { mix: 0.9 }), N('n5', 'output', 670, 20),
+      N('p2', 'pot', 450, 230, { pot: 2 })],
+    edges: [{ a: 'n1.l', b: 'n2.in' }, { a: 'n1.l', b: 'n3.in' }, { a: 'n2.out', b: 'n3.freq' }, { a: 'n1.l', b: 'n4.a' }, { a: 'n3.out', b: 'n4.b' }, { a: 'n4.out', b: 'n5.l' }, { a: 'p2.out', b: 'n4.ctl' }],
+  },
+  'Wah (POT0 = pedal)': {
+    nodes: [N('n1', 'input', 10, 20), N('n2', 'svf', 230, 10, { mode: 1, hz: 2400, minhz: 350, q: 5, curve: 1 }), N('p0', 'pot', 10, 180, { pot: 0 }), N('n3', 'output', 470, 20)],
+    edges: [{ a: 'n1.l', b: 'n2.in' }, { a: 'p0.out', b: 'n2.freq' }, { a: 'n2.out', b: 'n3.l' }],
+  },
+  'Phaser': {
+    nodes: [N('n1', 'input', 10, 20), N('n2', 'phaser', 230, 10, { rate: 0.4 }), N('p0', 'pot', 10, 180, { pot: 0 }), N('n3', 'output', 470, 20)],
+    edges: [{ a: 'n1.l', b: 'n2.in' }, { a: 'p0.out', b: 'n2.rate' }, { a: 'n2.out', b: 'n3.l' }],
+  },
+  'Compressor + Gate': {
+    nodes: [N('n1', 'input', 10, 20), N('n2', 'gate', 230, 10, { thr: 0.01 }), N('n3', 'comp', 450, 10), N('n4', 'gain', 670, 20, { gain: 1.99 }), N('p0', 'pot', 670, 180, { pot: 0 }), N('n5', 'output', 890, 20)],
+    edges: [{ a: 'n1.l', b: 'n2.in' }, { a: 'n2.out', b: 'n3.in' }, { a: 'n3.out', b: 'n4.in' }, { a: 'p0.out', b: 'n4.ctl' }, { a: 'n4.out', b: 'n5.l' }],
+  },
+  'Metal (Fromel-style)': {
+    nodes: [N('n1', 'input', 10, 20), N('n2', 'gate', 230, 10, { thr: 0.006 }), N('n3', 'metal', 450, 10), N('n4', 'gain', 670, 20, { gain: 1.99 }), N('p0', 'pot', 670, 180, { pot: 0 }), N('p1', 'pot', 450, 370, { pot: 1 }), N('n5', 'output', 890, 20)],
+    edges: [{ a: 'n1.l', b: 'n2.in' }, { a: 'n2.out', b: 'n3.in' }, { a: 'n3.out', b: 'n4.in' }, { a: 'p0.out', b: 'n4.ctl' }, { a: 'p1.out', b: 'n3.midf' }, { a: 'n4.out', b: 'n5.l' }],
+  },
+  'Ring Mod (POT0 = freq)': {
+    nodes: [N('n1', 'input', 10, 20), N('n2', 'ringmod', 230, 10, { hz: 1200, mix: 1 }), N('p0', 'pot', 10, 180, { pot: 0, curve: 1 }), N('n3', 'xfade', 450, 20, { mix: 0.7 }), N('p2', 'pot', 450, 230, { pot: 2 }), N('n4', 'output', 670, 20)],
+    edges: [{ a: 'n1.l', b: 'n2.in' }, { a: 'p0.out', b: 'n2.freq' }, { a: 'n1.l', b: 'n3.a' }, { a: 'n2.out', b: 'n3.b' }, { a: 'p2.out', b: 'n3.ctl' }, { a: 'n3.out', b: 'n4.l' }],
+  },
+  'Lo-Fi Crusher': {
+    nodes: [N('n1', 'input', 10, 20), N('n2', 'crush', 230, 10, { bits: 5, pre: 4, tone: 5000, mix: 1 }), N('n3', 'xfade', 450, 20, { mix: 1 }), N('p2', 'pot', 450, 230, { pot: 2 }), N('n4', 'output', 670, 20)],
+    edges: [{ a: 'n1.l', b: 'n2.in' }, { a: 'n1.l', b: 'n3.a' }, { a: 'n2.out', b: 'n3.b' }, { a: 'p2.out', b: 'n3.ctl' }, { a: 'n3.out', b: 'n4.l' }],
+  },
+  'Square Tremolo': {
+    nodes: [N('n1', 'input', 10, 20), N('n2', 'lfo', 10, 150, { shape: 3, rate: 6, low: 0.1, high: 1 }), N('p0', 'pot', 230, 330, { pot: 0 }), N('n3', 'gain', 230, 20), N('n4', 'output', 450, 20)],
+    edges: [{ a: 'n1.l', b: 'n3.in' }, { a: 'p0.out', b: 'n2.rate' }, { a: 'n2.out', b: 'n3.ctl' }, { a: 'n3.out', b: 'n4.l' }],
+  },
+  'Tremolo': {
+    nodes: [N('n1', 'input', 10, 20), N('n2', 'lfo', 10, 150, { rate: 5, low: 0.1, high: 1 }), N('p0', 'pot', 230, 330, { pot: 0 }), N('n3', 'gain', 230, 20), N('n4', 'output', 450, 20)],
+    edges: [{ a: 'n1.l', b: 'n3.in' }, { a: 'p0.out', b: 'n2.rate' }, { a: 'n2.out', b: 'n3.ctl' }, { a: 'n3.out', b: 'n4.l' }],
+  },
+  'Overdrive': {
+    nodes: [N('n1', 'input', 10, 20), N('n2', 'drive', 230, 10, { gain: 10, level: 0.45, tone: 3000 }), N('n3', 'filter', 450, 20, { hz: 7000 }), N('p1', 'pot', 450, 230, { pot: 1 }), N('n4', 'output', 670, 20)],
+    edges: [{ a: 'n1.l', b: 'n2.in' }, { a: 'n2.out', b: 'n3.in' }, { a: 'n3.out', b: 'n4.l' }, { a: 'p1.out', b: 'n3.freq' }],
+  },
+};
+
+const api = { NODE_TYPES, PRESETS, generate, defaultParams, FS, MAX_LFO_HZ, DESC, portTip };
+if (typeof module !== 'undefined' && module.exports) module.exports = api;
+else root.FV1PATCH = api;
+})(typeof self !== 'undefined' ? self : this);
+</script>
+<script>
+(function () {
+'use strict';
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const NT = FV1PATCH.NODE_TYPES, ASM = FV1ASM;
+const clone = (o) => JSON.parse(JSON.stringify(o));
+const LS = 'fv1studio.v1';
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/* ------------------------------------------------------------- state */
+let graph = clone(FV1PATCH.PRESETS['Echo']);
+let customMode = false;
+let pots = [0.5, 0.5, 0.5];
+let bank = new Array(8).fill(null);   // {name, asm}
+let selSlot = 0;
+let last = null;                      // last good assembly result
+let lastMemKey = '';
+let nextId = 1;
+
+function persist() {
+  try { localStorage.setItem(LS, JSON.stringify({ graph, pots, bank, customAsm: customMode ? $('#code').value : null })); } catch (e) {}
+}
+function restore() {
+  try {
+    const s = JSON.parse(localStorage.getItem(LS) || 'null');
+    if (!s) return;
+    if (s.graph && s.graph.nodes) graph = s.graph;
+    if (s.pots) pots = s.pots;
+    if (s.bank) bank = s.bank;
+    if (s.customAsm) { customMode = true; $('#code').value = s.customAsm; }
+  } catch (e) {}
+}
+
+/* ------------------------------------------------------------- build / assemble */
+let rebuildTimer = 0, lastLegend = null, lastTaps = {}, tapNodes = [];
+var changed = function () { clearTimeout(rebuildTimer); rebuildTimer = setTimeout(rebuild, 40); persist(); };
+
+function rebuild() {
+  let asm, stats = {};
+  const errs = [];
+  if (customMode) { asm = $('#code').value; lastTaps = {}; lastLegend = null; $('#optNote').textContent = ''; }
+  else {
+    const g = FV1PATCH.generate(graph, { optimize: $('#chkOpt').checked });
+    if (g.errors.length) { showErrors(g.errors); return; }
+    asm = g.asm; stats = g.stats; $('#code').value = asm; lastLegend = g.legend; lastTaps = g.taps;
+    $('#optNote').textContent = stats.saved || stats.regsSaved ? 'saved ' + (stats.saved || 0) + ' instr, ' + (stats.regsSaved || 0) + ' regs' : '';
+  }
+  const r = ASM.assemble(asm);
+  if (r.errors.length) { showErrors(r.errors.map((e) => 'line ' + e.line + ': ' + e.msg)); return; }
+  showErrors([]);
+  $('#warns').textContent = r.warnings.map((w) => 'line ' + w.line + ': ' + w.msg).join('\n');
+  last = { asm, r };
+  const regs = customMode ? countRegs(asm) : (stats.regs || 0);
+  setBar('bI', r.ninstr, 128); setBar('bM', r.memUsed, 32768);
+  $('#sI').textContent = r.ninstr; $('#sM').textContent = r.memUsed; $('#sR').textContent = regs;
+  const key = r.memLayout.join(',');
+  const reset = key !== lastMemKey; lastMemKey = key;
+  if (engine) { engine.fv1.port.postMessage({ type: 'program', words: r.words, reset }); sendTaps(); }
+  updateBankInfo();
+}
+function sendTaps() {
+  tapNodes = []; const regs = [];
+  Object.keys(lastTaps).forEach((id) => { const m = /^REG(\d+)$/.exec(lastTaps[id]); if (m) { tapNodes.push(id); regs.push(0x20 + +m[1]); } });
+  if (engine) engine.fv1.port.postMessage({ type: 'taps', regs });
+}
+function countRegs(asm) {
+  const m = asm.toLowerCase().match(/\breg(\d+)\b/g) || [];
+  return new Set(m).size;
+}
+function setBar(id, v, max) {
+  const el = $('#' + id); const f = v / max;
+  el.style.width = Math.min(100, f * 100) + '%';
+  el.className = f > 1 ? 'over' : (f > 0.85 ? 'hot' : '');
+}
+function showErrors(list) {
+  $('#errs').textContent = list.join('\n');
+  $('#statMsg').textContent = list.length ? 'Not updated: ' + list[0] : '';
+  $('#statMsg').style.color = list.length ? 'var(--red)' : '';
+}
+
+/* ------------------------------------------------------------- palette */
+function buildPalette() {
+  const p = $('#palette'); p.innerHTML = '';
+  const groups = [['Signal', ['input', 'output']], ['Controls', ['pot', 'lfo', 'smooth']], ['Effects', ['delay', 'reverb', 'chorus', 'pitch', 'phaser', 'ringmod', 'crush', 'drive', 'metal']], ['Filters & Dynamics', ['filter', 'svf', 'env', 'gate', 'comp']], ['Mix', ['gain', 'mixer', 'xfade']]];
+  groups.forEach(([title, types]) => {
+    const h = document.createElement('h3'); h.textContent = title; p.appendChild(h);
+    types.forEach((t) => {
+      const b = document.createElement('button'); b.textContent = NT[t].title; b.style.setProperty('--c', NT[t].color); b.dataset.type = t; b.title = FV1PATCH.DESC[t] || '';
+      b.onclick = () => addNode(t); p.appendChild(b);
+    });
+  });
+  updatePalette();
+}
+function updatePalette() {
+  $$('#palette button').forEach((b) => { const t = b.dataset.type; b.disabled = !!(NT[t].unique && graph.nodes.some((n) => n.type === t)); });
+}
+function addNode(type) {
+  const cv = $('#canvas');
+  let id; do { id = 'n' + (nextId++); } while (graph.nodes.some((n) => n.id === id));
+  let x = cv.scrollLeft / zoom + 40, y = cv.scrollTop / zoom + 30;
+  const hits = () => graph.nodes.some((m) => Math.abs(m.x - x) < 200 && Math.abs(m.y - y) < 150);
+  for (let i = 0; i < 60 && hits(); i++) { y += 40; if (y > (cv.scrollTop + cv.clientHeight) / zoom - 200) { y = cv.scrollTop / zoom + 30; x += 230; } }
+  graph.nodes.push({ id, type, x, y, p: FV1PATCH.defaultParams(type) });
+  renderGraph(); changed();
+}
+
+/* ------------------------------------------------------------- node editor */
+const world = $('#world'), svg = $('#cables');
+let zoom = 1;
+function setZoom(z) { zoom = Math.max(0.4, Math.min(1.5, z)); world.style.transformOrigin = '0 0'; world.style.transform = zoom === 1 ? '' : 'scale(' + zoom + ')'; drawCables(); }
+function fitView() {
+  const cv = $('#canvas'); let mx = 0, my = 0;
+  graph.nodes.forEach((n) => { const el = world.querySelector('.node[data-id="' + n.id + '"]'); if (!el) return; mx = Math.max(mx, n.x + el.offsetWidth); my = Math.max(my, n.y + el.offsetHeight); });
+  if (!mx) return;
+  zoom = 1; world.style.transform = '';
+  setZoom(Math.min(1, (cv.clientWidth - 24) / (mx + 12), (cv.clientHeight - 24) / (my + 12))); cv.scrollLeft = 0; cv.scrollTop = 0;
+}
+$('#btnFit').onclick = fitView;
+$('#canvas').addEventListener('wheel', (e) => { if (!e.ctrlKey) return; e.preventDefault(); setZoom(zoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1)); }, { passive: false });
+const KC = { audio: '#4aa3ff', ctl: '#ff9f43' };
+
+function renderGraph() {
+  $$('.node', world).forEach((n) => n.remove());
+  graph.nodes.forEach(makeNode);
+  updatePalette();
+  requestAnimationFrame(drawCables);
+}
+function fmt(v, step) {
+  const dec = step >= 1 ? 0 : (step >= 0.1 ? 1 : 2);
+  return (+v).toFixed(dec);
+}
+function makeNode(n) {
+  const def = NT[n.type]; curType = n.type;
+  const el = document.createElement('div'); el.className = 'node'; el.dataset.id = n.id;
+  el.style.left = n.x + 'px'; el.style.top = n.y + 'px'; el.style.setProperty('--c', def.color);
+  const head = document.createElement('div'); head.className = 'nhead';
+  head.innerHTML = '<span></span><button title="Delete block">✕</button>'; head.firstChild.textContent = def.title; head.dataset.tip = def.title + ' — ' + (FV1PATCH.DESC[n.type] || '');
+  head.lastChild.onclick = () => deleteNode(n.id);
+  el.appendChild(head);
+  const lv = document.createElement('div'); lv.className = 'lvl'; lv.title = 'Signal level at this block\'s output. Red = at the chip\'s limit (it clips silently).'; lv.innerHTML = '<i></i>'; el.appendChild(lv);
+  const ports = document.createElement('div'); ports.className = 'ports';
+  const ci = document.createElement('div'), co = document.createElement('div'); ci.className = co.className = 'pcol';
+  def.inputs.forEach((p) => ci.appendChild(portEl(p, 'in')));
+  def.outputs.forEach((p) => co.appendChild(portEl(p, 'out')));
+  ports.appendChild(ci); ports.appendChild(co); el.appendChild(ports);
+  if (def.params.length) {
+    const pr = document.createElement('div'); pr.className = 'params';
+    def.params.forEach((d) => pr.appendChild(paramRow(n, d)));
+    el.appendChild(pr);
+  }
+  head.addEventListener('pointerdown', (e) => {
+    if (e.target.tagName === 'BUTTON') return;
+    const sx = e.clientX, sy = e.clientY, ox = n.x, oy = n.y;
+    head.setPointerCapture(e.pointerId); head.style.cursor = 'grabbing';
+    const mv = (ev) => { n.x = Math.max(0, ox + (ev.clientX - sx) / zoom); n.y = Math.max(0, oy + (ev.clientY - sy) / zoom); el.style.left = n.x + 'px'; el.style.top = n.y + 'px'; drawCables(); };
+    const up = () => { head.removeEventListener('pointermove', mv); head.removeEventListener('pointerup', up); head.style.cursor = ''; persist(); };
+    head.addEventListener('pointermove', mv); head.addEventListener('pointerup', up);
+  });
+  world.appendChild(el);
+}
+let curType = '';
+function portEl(p, dir) {
+  const d = document.createElement('div'); d.className = 'pin ' + dir;
+  const dot = document.createElement('span'); dot.className = 'dot'; dot.dataset.port = p.id; dot.dataset.dir = dir; dot.dataset.kind = p.kind; dot.style.setProperty('--pc', KC[p.kind]);
+  dot.dataset.tip = FV1PATCH.portTip(curType, dir, p.id); d.dataset.tip = dot.dataset.tip;
+  const lb = document.createElement('span'); lb.textContent = p.label;
+  d.appendChild(dot); d.appendChild(lb); return d;
+}
+function paramRow(n, d) {
+  const row = document.createElement('div'); row.className = 'prow';
+  const lb = document.createElement('label'); lb.textContent = d.label; row.appendChild(lb);
+  if (PARAM_TIPS[d.id]) row.dataset.tip = PARAM_TIPS[d.id];
+  if (d.select || d.int) {
+    const sel = document.createElement('select');
+    const opts = d.select || ['POT0', 'POT1', 'POT2'];
+    opts.forEach((o, i) => { const op = document.createElement('option'); op.value = i; op.textContent = o; sel.appendChild(op); });
+    sel.value = Math.round(n.p[d.id]);
+    sel.onchange = () => { n.p[d.id] = +sel.value; changed(); };
+    row.appendChild(sel); return row;
+  }
+  const r = document.createElement('input'); r.type = 'range'; r.min = 0; r.max = 1000; r.step = 1;
+  const toT = (v) => d.log ? Math.log(v / d.min) / Math.log(d.max / d.min) : (v - d.min) / (d.max - d.min);
+  const toV = (t) => d.log ? d.min * Math.pow(d.max / d.min, t) : d.min + (d.max - d.min) * t;
+  const out = document.createElement('span');
+  const show = () => { out.textContent = fmt(n.p[d.id], d.step) + (d.unit ? '' : ''); };
+  r.value = Math.round(toT(n.p[d.id]) * 1000);
+  r.oninput = () => {
+    let v = toV(r.value / 1000);
+    v = Math.round(v / d.step) * d.step; v = Math.max(d.min, Math.min(d.max, +v.toFixed(4)));
+    n.p[d.id] = v; show(); changed();
+  };
+  show(); row.appendChild(r); row.appendChild(out); return row;
+}
+function deleteNode(id) {
+  graph.nodes = graph.nodes.filter((n) => n.id !== id);
+  graph.edges = graph.edges.filter((e) => e.a.split('.')[0] !== id && e.b.split('.')[0] !== id);
+  renderGraph(); changed();
+}
+function dotCenter(nodeId, port, dir) {
+  const d = world.querySelector('.node[data-id="' + nodeId + '"] .dot[data-dir="' + dir + '"][data-port="' + port + '"]');
+  if (!d) return null;
+  const w = world.getBoundingClientRect(), r = d.getBoundingClientRect();
+  return { x: (r.left - w.left + r.width / 2) / zoom, y: (r.top - w.top + r.height / 2) / zoom };
+}
+function cablePath(a, b) {
+  const dx = Math.max(40, Math.abs(b.x - a.x) / 2);
+  return 'M' + a.x + ' ' + a.y + ' C' + (a.x + dx) + ' ' + a.y + ',' + (b.x - dx) + ' ' + b.y + ',' + b.x + ' ' + b.y;
+}
+function drawCables() {
+  svg.innerHTML = '';
+  const used = new Set();
+  graph.edges.forEach((e, idx) => {
+    const [an, ap] = e.a.split('.'), [bn, bp] = e.b.split('.');
+    const A = dotCenter(an, ap, 'out'), B = dotCenter(bn, bp, 'in');
+    if (!A || !B) return;
+    used.add(e.a + '>o'); used.add(e.b + '>i');
+    const kind = (NT[(graph.nodes.find((n) => n.id === an) || {}).type] || { outputs: [] }).outputs.find((o) => o.id === ap);
+    const col = KC[kind ? kind.kind : 'audio'];
+    const hit = document.createElementNS('http://www.w3.org/2000/svg', 'path'); hit.setAttribute('d', cablePath(A, B)); hit.setAttribute('class', 'hit');
+    hit.addEventListener('click', () => { graph.edges.splice(idx, 1); drawCables(); changed(); });
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p.setAttribute('d', cablePath(A, B)); p.setAttribute('stroke', col);
+    svg.appendChild(hit); svg.appendChild(p);
+  });
+  $$('.node .dot', world).forEach((d) => {
+    const id = d.closest('.node').dataset.id + '.' + d.dataset.port;
+    d.classList.toggle('used', used.has(id + (d.dataset.dir === 'out' ? '>o' : '>i')));
+  });
+}
+// cable dragging
+world.addEventListener('pointerdown', (e) => {
+  const dot = e.target.closest && e.target.closest('.dot'); if (!dot) return;
+  e.preventDefault();
+  const nid = dot.closest('.node').dataset.id, port = dot.dataset.port, dir = dot.dataset.dir;
+  let fixed; // {id, dir}
+  if (dir === 'out') fixed = { key: nid + '.' + port, dir: 'out' };
+  else {
+    const i = graph.edges.findIndex((x) => x.b === nid + '.' + port);
+    if (i >= 0) { fixed = { key: graph.edges[i].a, dir: 'out' }; graph.edges.splice(i, 1); drawCables(); }
+    else fixed = { key: nid + '.' + port, dir: 'in' };
+  }
+  const tmp = document.createElementNS('http://www.w3.org/2000/svg', 'path'); tmp.setAttribute('stroke', '#ffd166'); tmp.setAttribute('stroke-dasharray', '6 4'); tmp.style.pointerEvents = 'none';
+  svg.appendChild(tmp);
+  const [fn, fp] = fixed.key.split('.');
+  const fkind = dot.dataset.kind; world.classList.add('dragging');
+  $$('.node .dot', world).forEach((d) => { const ok = d.dataset.dir !== fixed.dir && d.closest('.node').dataset.id !== fn; d.classList.toggle('tgt', ok && d.dataset.kind === fkind); d.classList.toggle('tgt2', ok && d.dataset.kind !== fkind); });
+  showHint(fixed.dir === 'out' ? 'Drop on an INPUT dot (left side of a block). Green = matching type, amber = audio/control mismatch (still allowed).' : 'Drop on an OUTPUT dot (right side of a block).', true);
+  const move = (ev) => {
+    const w = world.getBoundingClientRect(); const P = { x: (ev.clientX - w.left) / zoom, y: (ev.clientY - w.top) / zoom };
+    const F = dotCenter(fn, fp, fixed.dir);
+    if (!F) return;
+    tmp.setAttribute('d', fixed.dir === 'out' ? cablePath(F, P) : cablePath(P, F));
+  };
+  const up = (ev) => {
+    window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); tmp.remove();
+    world.classList.remove('dragging'); $$('.node .dot', world).forEach((d) => d.classList.remove('tgt', 'tgt2')); hideHint();
+    const t = document.elementFromPoint(ev.clientX, ev.clientY); const td = t && t.closest && t.closest('.dot');
+    if (td && td.dataset.dir !== fixed.dir) {
+      const tn = td.closest('.node').dataset.id, tp = td.dataset.port;
+      const outKey = fixed.dir === 'out' ? fixed.key : tn + '.' + tp;
+      const inKey = fixed.dir === 'in' ? fixed.key : tn + '.' + tp;
+      if (outKey.split('.')[0] !== inKey.split('.')[0]) {
+        graph.edges = graph.edges.filter((x) => x.b !== inKey);
+        graph.edges.push({ a: outKey, b: inKey });
+      }
+    }
+    drawCables(); changed();
+  };
+  window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); move(e);
+});
+window.addEventListener('resize', drawCables);
+
+/* ------------------------------------------------------------- code panel */
+$('#btnHand').onclick = () => {
+  customMode = !customMode;
+  const code = $('#code');
+  code.readOnly = !customMode;
+  $('#btnHand').textContent = customMode ? 'Back to graph' : 'Edit code by hand';
+  $('#btnHand').classList.toggle('on', customMode);
+  const b = $('#banner');
+  b.style.display = customMode ? 'block' : 'none';
+  b.textContent = 'Hand-editing: the code on the right is driving the sound. Graph edits are ignored until you press “Back to graph” (which regenerates the code from the graph).';
+  rebuild(); persist();
+};
+$('#code').addEventListener('input', () => { if (customMode) changed(); });
+$('#btnCopy').onclick = () => navigator.clipboard && navigator.clipboard.writeText($('#code').value);
+function download(name, data, type) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data], { type: type || 'application/octet-stream' })); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+$('#btnSpn').onclick = () => download('patch.spn', $('#code').value, 'text/plain');
+$$('.tabs button').forEach((b) => b.onclick = () => {
+  $$('.tabs button').forEach((x) => x.classList.toggle('on', x === b));
+  $$('.tab').forEach((t) => t.classList.toggle('on', t.id === 'tab-' + b.dataset.tab));
+});
+
+/* ------------------------------------------------------------- presets / patch files */
+const presetSel = $('#preset');
+Object.keys(FV1PATCH.PRESETS).forEach((k) => { const o = document.createElement('option'); o.textContent = k; presetSel.appendChild(o); });
+const cust = document.createElement('option'); cust.textContent = '— my patch —'; cust.value = ''; presetSel.insertBefore(cust, presetSel.firstChild); presetSel.value = '';
+presetSel.onchange = () => {
+  if (!presetSel.value) return;
+  if (customMode) $('#btnHand').click();
+  graph = clone(FV1PATCH.PRESETS[presetSel.value]); renderGraph(); requestAnimationFrame(fitView); changed();
+};
+$('#btnSavePatch').onclick = () => download('fv1-patch.json', JSON.stringify({ graph, customAsm: customMode ? $('#code').value : null }, null, 1), 'application/json');
+$('#btnOpenPatch').onclick = () => $('#filePatch').click();
+$('#filePatch').onchange = async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const j = JSON.parse(await f.text());
+    if (!j.graph || !j.graph.nodes) throw new Error('not a patch file');
+    graph = j.graph; if (customMode) $('#btnHand').click();
+    renderGraph(); requestAnimationFrame(fitView); changed();
+  } catch (err) { showErrors(['Could not open patch: ' + err.message]); }
+  e.target.value = '';
+};
+
+/* ------------------------------------------------------------- audio engine */
+let engine = null;
+const EMU_SRC = $('#emu-src').textContent, WK_SRC = $('#worklet-src').textContent;
+
+async function startAudio() {
+  if (engine) return;
+  let ctx;
+  try { ctx = new AudioContext({ sampleRate: 32000, latencyHint: 'interactive' }); } catch (e) { ctx = new AudioContext({ latencyHint: 'interactive' }); }
+  if (ctx.sampleRate !== 32000) $('#statMsg').textContent = 'Browser audio runs at ' + ctx.sampleRate + ' Hz (FV-1 is 32 kHz): delay times and LFO speeds will be slightly off. Chrome gives exact 32 kHz.';
+  const code = EMU_SRC + '\n' + WK_SRC;
+  try {
+    await ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([code], { type: 'application/javascript' })));
+  } catch (e1) {      // blob: URLs are refused for pages opened from file:// ; a data: URL works there
+    await ctx.audioWorklet.addModule('data:application/javascript;base64,' + btoa(unescape(encodeURIComponent(code))));
+  }
+  const looper = new AudioWorkletNode(ctx, 'looper', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1] });
+  const fv1 = new AudioWorkletNode(ctx, 'fv1', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2] });
+  const inGain = ctx.createGain(), outGain = ctx.createGain();
+  inGain.connect(looper); looper.connect(fv1); fv1.connect(outGain); outGain.connect(ctx.destination);
+  engine = { ctx, looper, fv1, inGain, outGain, mic: null, stream: null, sr: ctx.sampleRate };
+  outGain.gain.value = $('#outVol').value ** 2; inGain.gain.value = Math.pow(10, +$('#inGain').value / 20);
+  fv1.port.onmessage = (e) => {
+    const m = e.data;
+    if (m.type === 'meter') meter(m);
+    else if (m.type === 'warn') { $('#warns').textContent += (($('#warns').textContent ? '\n' : '') + 'Emulator: ' + m.msg); }
+  };
+  looper.port.onmessage = (e) => { if (e.data.type === 'looper') loopUI(e.data); else if (e.data.type === 'dump') renderWav(e.data.data, e.data.sr); };
+  fv1.port.postMessage({ type: 'pots', pots });
+  looper.port.postMessage({ type: 'set', live: $('#chkLive').checked, liveGain: 1, loopGain: +$('#loopVol').value });
+  if (last) { fv1.port.postMessage({ type: 'program', words: last.r.words, reset: true }); sendTaps(); }
+  await ctx.resume();
+  $('#btnPower').textContent = 'Audio running'; $('#btnPower').classList.remove('primary'); $('#btnPower').classList.add('on');
+  fv1.port.postMessage({ type: 'bypass', on: $('#chkBypass').checked });
+}
+$('#btnPower').onclick = async () => {
+  try { await startAudio(); } catch (e) { $('#statMsg').textContent = 'Audio error: ' + e.message; }
+};
+$('#outVol').oninput = () => { if (engine) engine.outGain.gain.value = $('#outVol').value ** 2; };
+$('#inGain').oninput = () => { const d = +$('#inGain').value; $('#inGainV').textContent = (d > 0 ? '+' : '') + d + ' dB'; if (engine) engine.inGain.gain.value = Math.pow(10, d / 20); };
+$('#chkBypass').onchange = () => engine && engine.fv1.port.postMessage({ type: 'bypass', on: $('#chkBypass').checked });
+$('#chkLive').onchange = () => engine && engine.looper.port.postMessage({ type: 'set', live: $('#chkLive').checked });
+$('#loopVol').oninput = () => engine && engine.looper.port.postMessage({ type: 'set', loopGain: +$('#loopVol').value });
+$$('.pot').forEach((s) => {
+  s.value = pots[+s.dataset.i];
+  s.oninput = () => { pots[+s.dataset.i] = +s.value; if (engine) engine.fv1.port.postMessage({ type: 'pots', pots }); persist(); };
+});
+
+let pkIn = 0, pkOut = 0, clipUntil = 0;
+const tapDisp = {};
+function levels(m) {
+  if (!m.taps) return;
+  tapNodes.forEach((id, i) => {
+    const v = Math.max(m.taps[i] || 0, (tapDisp[id] || 0) * 0.85); tapDisp[id] = v;
+    const el = world.querySelector('.node[data-id="' + id + '"] .lvl i'); if (!el) return;
+    el.style.width = Math.max(0, Math.min(100, (20 * Math.log10(Math.max(v, 1e-5)) + 60) / 60 * 100)) + '%';
+    el.classList.toggle('hot', v >= 0.98);
+  });
+}
+function meter(m) {
+  levels(m);
+  pkIn = Math.max(m.pkIn, pkIn * 0.8); pkOut = Math.max(m.pkOut, pkOut * 0.8);
+  const pct = (v) => Math.max(0, Math.min(100, (20 * Math.log10(Math.max(v, 1e-5)) + 60) / 60 * 100)) + '%';
+  $('#mIn').style.width = pct(pkIn); $('#mOut').style.width = pct(pkOut);
+  if (m.clip) clipUntil = performance.now() + 600;
+  $('#clipLed').classList.toggle('on', performance.now() < clipUntil);
+}
+
+/* live input */
+async function listDevices() {
+  try {
+    const ds = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'audioinput');
+    const cur = $('#devSel').value; const sel = $('#devSel'); sel.innerHTML = '<option value="">Default input</option>';
+    ds.forEach((d, i) => { const o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || ('Input ' + (i + 1)); sel.appendChild(o); });
+    sel.value = cur;
+  } catch (e) {}
+}
+let micTimer = 0, quiet = 0, chanState = { L: 0, R: 0, use: 'L', ch: 0 };
+function stopMic() {
+  clearInterval(micTimer);
+  if (engine && engine.stream) engine.stream.getTracks().forEach((t) => t.stop());
+  if (engine && engine.micNodes) engine.micNodes.forEach((n) => { try { n.disconnect(); } catch (e) {} });
+  if (engine) { engine.mic = null; engine.micNodes = null; }
+  $('#btnMic').textContent = 'Turn on'; $('#btnMic').classList.remove('on'); $('#inStat').textContent = 'Input off.';
+}
+$('#btnMic').onclick = async () => {
+  try {
+    await startAudio();
+    if (engine.mic) { stopMic(); return; }
+    const id = $('#devSel').value;
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: id ? { exact: id } : undefined, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: { ideal: 2 } } });
+    const ctx = engine.ctx, src = ctx.createMediaStreamSource(stream), split = ctx.createChannelSplitter(2);
+    const gL = ctx.createGain(), gR = ctx.createGain(), aL = ctx.createAnalyser(), aR = ctx.createAnalyser();
+    aL.fftSize = aR.fftSize = 2048;
+    src.connect(split); split.connect(gL, 0); split.connect(gR, 1); split.connect(aL, 0); split.connect(aR, 1);
+    gL.connect(engine.inGain); gR.connect(engine.inGain);
+    engine.stream = stream; engine.mic = src; engine.micNodes = [src, split, gL, gR, aL, aR];
+    const nch = (stream.getAudioTracks()[0].getSettings() || {}).channelCount || 1, buf = new Float32Array(2048);
+    const pk = (an) => { an.getFloatTimeDomainData(buf); let m = 0; for (let i = 0; i < buf.length; i++) m = Math.max(m, Math.abs(buf[i])); return m; };
+    const db = (v) => v > 1e-5 ? (20 * Math.log10(v)).toFixed(0) + ' dB' : '—';
+    micTimer = setInterval(() => {
+      chanState.L = Math.max(pk(aL), chanState.L * 0.9); chanState.R = Math.max(pk(aR), chanState.R * 0.9);
+      const mode = $('#chanSel').value; let use = mode;
+      if (mode === 'auto') {
+        const L = chanState.L, R = chanState.R;
+        if (R > L * 2 && R > 0.002) use = 'R'; else if (L > R * 2 && L > 0.002) use = 'L'; else use = chanState.use === 'R' && R >= L ? 'R' : (L > 0.002 && R > 0.002 && nch > 1 && Math.abs(L - R) < Math.max(L, R) * 0.5 ? 'B' : 'L');
+      }
+      chanState.use = use;
+      const wl = use === 'L' ? 1 : use === 'B' ? 0.5 : 0, wr = use === 'R' ? 1 : use === 'B' ? 0.5 : 0;
+      gL.gain.setTargetAtTime(wl, ctx.currentTime, 0.02); gR.gain.setTargetAtTime(wr, ctx.currentTime, 0.02);
+      const used = use === 'L' ? chanState.L : use === 'R' ? chanState.R : Math.max(chanState.L, chanState.R) * 0.5;
+      quiet = Math.max(chanState.L, chanState.R) < 1e-3 ? quiet + 1 : 0;
+      const lowWarn = used > 0 && used < 0.01 ? ' · very quiet: turn up the interface gain or Trim' : '';
+      $('#inStat').textContent = nch + ' ch · in1 ' + db(chanState.L) + ' · in2 ' + db(chanState.R) + ' · using ' + ({ L: 'input 1', R: 'input 2', B: 'both' }[use]) + (quiet > 15 ? ' · NO SIGNAL for 3 s – pick the right device, channel, or check the interface gain/phantom/inst switch' : lowWarn);
+    }, 200);
+    $('#btnMic').textContent = 'Turn off'; $('#btnMic').classList.add('on');
+    listDevices();
+  } catch (e) { $('#statMsg').textContent = 'Input error: ' + e.message; }
+};
+$('#devSel').onchange = async () => { if (engine && engine.mic) { stopMic(); await $('#btnMic').onclick(); } };
+if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) listDevices();
+
+/* looper */
+const lp = (m) => engine && engine.looper.port.postMessage(m);
+let recording = false;
+$('#btnRec').onclick = async () => {
+  await startAudio();
+  if (!engine.mic && !engine.demoWarned) { engine.demoWarned = true; $('#statMsg').textContent = 'Turn on the live input first: the looper records from it.'; return; }
+  if (!recording) { lp({ type: 'rec' }); recording = true; } else { lp({ type: 'play' }); recording = false; }
+};
+$('#btnPlay').onclick = async () => { await startAudio(); recording = false; lp({ type: 'play' }); };
+$('#btnOver').onclick = async () => { await startAudio(); lp({ type: 'overdub' }); };
+$('#btnStop').onclick = () => { recording = false; lp({ type: 'stop' }); };
+$('#btnUndo').onclick = () => lp({ type: 'undo' });
+$('#btnClear').onclick = () => { recording = false; lp({ type: 'clear' }); };
+function loopUI(m) {
+  const bar = $('#loopbar');
+  $('#loopState').textContent = '— ' + ({ idle: 'empty', rec: 'recording', play: 'playing', overdub: 'overdubbing', stopped: 'stopped' }[m.state] || m.state);
+  bar.classList.toggle('rec', m.state === 'rec');
+  $('#loopbar i').style.width = (m.len ? Math.min(100, m.pos / m.len * 100) : 0) + '%';
+  const sec = (m.state === 'rec' ? m.pos : m.len) / m.sr;
+  $('#loopTime').textContent = sec ? sec.toFixed(1) + ' s' : '';
+  $('#btnRec').classList.toggle('on', m.state === 'rec'); $('#btnRec').textContent = m.state === 'rec' ? '● Recording… (press to loop)' : '● Rec';
+  $('#btnOver').classList.toggle('on', m.state === 'overdub');
+  recording = m.state === 'rec';
+}
+$('#btnLoad').onclick = () => $('#fileAudio').click();
+$('#fileAudio').onchange = async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    await startAudio();
+    const buf = await engine.ctx.decodeAudioData(await f.arrayBuffer());
+    const n = buf.length, mono = new Float32Array(n);
+    for (let c = 0; c < buf.numberOfChannels; c++) { const d = buf.getChannelData(c); for (let i = 0; i < n; i++) mono[i] += d[i] / buf.numberOfChannels; }
+    let pk = 0; for (let i = 0; i < n; i++) pk = Math.max(pk, Math.abs(mono[i]));
+    if (pk > 0.9) for (let i = 0; i < n; i++) mono[i] *= 0.9 / pk;
+    engine.looper.port.postMessage({ type: 'load', data: mono });
+    $('#statMsg').textContent = 'Loaded ' + f.name + (n / engine.sr > 60 ? ' (first 60 s)' : '') + ' and looping it.';
+  } catch (err) { $('#statMsg').textContent = 'Could not read audio file: ' + err.message; }
+  e.target.value = '';
+};
+function karplus(sr) {                      // plucked-string arpeggio so you can audition without a guitar
+  const notes = [110, 164.81, 220, 277.18, 329.63, 277.18, 220, 164.81, 98, 146.83, 196, 246.94, 293.66, 246.94, 196, 146.83];
+  const step = Math.round(sr * 0.3), total = step * notes.length, out = new Float32Array(total);
+  notes.forEach((f, k) => {
+    const L = Math.max(2, Math.round(sr / f)), line = new Float32Array(L); let seed = 12345 + k * 77;
+    for (let i = 0; i < L; i++) { seed = (seed * 1664525 + 1013904223) >>> 0; line[i] = (seed / 4294967296 * 2 - 1) * 0.6; }
+    let p = 0, prev = 0; const len = Math.min(total - k * step, Math.round(sr * 1.8));
+    for (let i = 0; i < len; i++) {
+      const cur = line[p], nx = line[(p + 1) % L]; const v = 0.4985 * (cur + nx); line[p] = v; p = (p + 1) % L;
+      out[k * step + i] += cur * 0.8;
+    }
+  });
+  let pk = 0; for (let i = 0; i < total; i++) pk = Math.max(pk, Math.abs(out[i]));
+  for (let i = 0; i < total; i++) out[i] *= 0.7 / pk;
+  return out;
+}
+$('#btnDemo').onclick = async () => { await startAudio(); engine.looper.port.postMessage({ type: 'load', data: karplus(engine.sr) }); };
+
+/* ------------------------------------------------------------- bank + chip */
+function slotAsm(i) { return bank[i] && bank[i].asm; }
+function renderSlots() {
+  const box = $('#slots'); box.innerHTML = '';
+  for (let i = 0; i < 8; i++) {
+    const s = bank[i]; const d = document.createElement('div'); d.className = 'slot' + (i === selSlot ? ' sel' : '');
+    const info = s ? (() => { const r = ASM.assemble(s.asm); return r.errors.length ? 'has errors' : r.ninstr + ' instructions, ' + r.memUsed + ' samples RAM'; })() : 'empty (plays silence)';
+    d.innerHTML = '<input type="radio" name="slot"><input type="text" placeholder="Program ' + (i + 1) + ' name"><div class="acts"></div><small></small>';
+    const radio = d.children[0], name = d.children[1], acts = d.children[2];
+    radio.checked = i === selSlot; radio.onchange = () => { selSlot = i; renderSlots(); };
+    name.value = s ? s.name : ''; name.oninput = () => { if (bank[i]) { bank[i].name = name.value; persist(); } };
+    d.querySelector('small').textContent = 'S2 S1 S0 = ' + [(i >> 2) & 1, (i >> 1) & 1, i & 1].join(' ') + '  ·  ' + info;
+    const mk = (t, fn) => { const b = document.createElement('button'); b.textContent = t; b.onclick = fn; acts.appendChild(b); };
+    mk('Store', () => { if (!last) return; bank[i] = { name: name.value || presetNameGuess(), asm: last.asm, legend: lastLegend }; persist(); renderSlots(); updateBankInfo(); });
+    mk('Load', () => { if (!s) return; if (!customMode) $('#btnHand').click(); $('#code').value = s.asm; rebuild(); });
+    mk('Audition', () => { if (!s) return; auditionAsm(s.asm, 'slot ' + (i + 1)); });
+    mk('Clear', () => { bank[i] = null; persist(); renderSlots(); updateBankInfo(); });
+    box.appendChild(d);
+  }
+}
+function presetNameGuess() { return presetSel.value || 'My patch'; }
+function bankImage() {
+  const words = [], problems = [];
+  for (let i = 0; i < 8; i++) {
+    if (!bank[i]) { words.push(null); continue; }
+    const r = ASM.assemble(bank[i].asm);
+    if (r.errors.length) { problems.push('Slot ' + (i + 1) + ': ' + r.errors[0].msg); words.push(null); } else words.push(r.words);
+  }
+  return { img: ASM.buildBankImage(words), problems };
+}
+function updateBankInfo() {
+  const { img, problems } = bankImage();
+  let sum = 0; for (const b of img) sum = (sum + b) & 0xffff;
+  const used = bank.filter(Boolean).length;
+  $('#bankInfo').textContent = used + ' of 8 slots used · image 4096 bytes · byte-sum 0x' + sum.toString(16).toUpperCase().padStart(4, '0') + (problems.length ? ' · ' + problems.join('; ') : '');
+}
+$('#btnHex').onclick = () => { const { img } = bankImage(); download('fv1-bank.hex', ASM.toIntelHex(img), 'text/plain'); };
+$('#btnBin').onclick = () => { const { img } = bankImage(); download('fv1-bank.bin', img); };
+
+/* serial programmer */
+const log = (m) => { const l = $('#log'); l.textContent += m + '\n'; l.scrollTop = l.scrollHeight; };
+let link = null;
+class Serial {
+  async open() {
+    this.port = await navigator.serial.requestPort(); await this.port.open({ baudRate: 115200 });
+    this.reader = this.port.readable.getReader(); this.writer = this.port.writable.getWriter(); this.buf = [];
+    (async () => { try { for (;;) { const { value, done } = await this.reader.read(); if (done) break; for (const b of value) this.buf.push(b); } } catch (e) {} })();
+  }
+  async read(n, to) { const t0 = performance.now(); while (this.buf.length < n) { if (performance.now() - t0 > (to || 2500)) throw new Error('timeout waiting for programmer'); await sleep(2); } return this.buf.splice(0, n); }
+  async write(a) { await this.writer.write(Uint8Array.from(a)); }
+  async close() { try { await this.reader.cancel(); } catch (e) {} try { this.reader.releaseLock(); this.writer.releaseLock(); await this.port.close(); } catch (e) {} }
+}
+$('#btnSerial').onclick = async () => {
+  if (!('serial' in navigator)) { log('Web Serial is not available. Use Chrome or Edge on desktop, or download the .hex/.bin for a standalone programmer.'); return; }
+  try {
+    if (link) { await link.close(); link = null; $('#btnSerial').textContent = 'Connect programmer'; ['btnWrite', 'btnVerify', 'btnRead', 'btnReadBank'].forEach((i) => $('#' + i).disabled = true); return; }
+    link = new Serial(); await link.open(); log('Port open, waiting for the Arduino to boot…'); await sleep(2000); link.buf.length = 0;
+    await link.write([63]); const r = await link.read(9, 3000);
+    const id = String.fromCharCode(...r.slice(0, 8)), chip = String.fromCharCode(r[8]);
+    if (id !== 'FV1PROG1') throw new Error('unexpected reply "' + id + '" – is the FV-1 programmer sketch loaded?');
+    log('Programmer found. ' + (chip === 'Y' ? 'EEPROM answered at 0x50.' : 'WARNING: no EEPROM answered at 0x50, check wiring.'));
+    $('#btnSerial').textContent = 'Disconnect'; ['btnWrite', 'btnVerify', 'btnRead'].forEach((i) => $('#' + i).disabled = false);
+  } catch (e) { log('Error: ' + e.message); if (link) { try { await link.close(); } catch (x) {} link = null; } }
+};
+async function readChip(prog) {
+  const out = new Uint8Array(4096);
+  for (let a = 0; a < 4096; a += 16) {
+    await link.write([82, a >> 8, a & 255, 16]); const r = await link.read(17);
+    if (r[16] !== 75) throw new Error('read error at 0x' + a.toString(16));
+    out.set(r.slice(0, 16), a); if (prog && a % 512 === 0) log('  read ' + a + '/4096');
+  }
+  return out;
+}
+$('#btnWrite').onclick = async () => {
+  try {
+    const { img, problems } = bankImage();
+    if (problems.length) { log('Fix these first: ' + problems.join('; ')); return; }
+    log('Writing 4096 bytes…');
+    for (let a = 0; a < 4096; a += 16) {
+      await link.write([80, a >> 8, a & 255, ...img.slice(a, a + 16)]);
+      const r = await link.read(1, 4000); if (r[0] !== 75) throw new Error('write failed at 0x' + a.toString(16));
+      if (a % 1024 === 0) log('  ' + a + '/4096');
+    }
+    log('Verifying…'); const back = await readChip(false);
+    let bad = 0; for (let i = 0; i < 4096; i++) if (back[i] !== img[i]) bad++;
+    log(bad ? 'VERIFY FAILED: ' + bad + ' bytes differ.' : 'Done. Chip matches the bank image. Put it in the pedal.');
+  } catch (e) { log('Error: ' + e.message); }
+};
+$('#btnVerify').onclick = async () => {
+  try { const { img } = bankImage(); const back = await readChip(false); let bad = 0; for (let i = 0; i < 4096; i++) if (back[i] !== img[i]) bad++; log(bad ? 'Chip differs from current bank in ' + bad + ' bytes.' : 'Chip matches the current bank.'); }
+  catch (e) { log('Error: ' + e.message); }
+};
+$('#btnRead').onclick = async () => {
+  try { log('Reading chip…'); const b = await readChip(true); download('fv1-chip-dump.bin', b); log('Saved dump.'); }
+  catch (e) { log('Error: ' + e.message); }
+};
+
+
+/* ------------------------------------------------------------- tooltips */
+const PARAM_TIPS = {
+  atk: 'How fast the level detector reacts to louder playing.', rel: 'How slowly it lets go after the note dies away.', thr: 'Level at which the effect starts to act.',
+  q: 'Resonance: higher = narrower, more vocal peak (can ring or squeal).', hz: 'Frequency in Hz. Where a control is connected, this is the MAXIMUM it sweeps to.',
+  dist: 'Total gain into the clipping stages.', tight: 'Bass cut before the clipping – higher = tighter, less flabby low end.', fizz: 'Low-pass after clipping – lower = smoother, less buzzy highs.',
+  low: 'Low shelf boost/cut (below ~130 Hz).', mid: 'Mid peak boost/cut around the Mid freq.', high: 'High shelf boost/cut (above ~3 kHz).', midhz: 'Centre of the mid control. A Pot on "mid freq" sweeps up to this.',
+  fb: 'Feedback amount (negative inverts).', mix: 'Wet/dry balance inside this block.', stages: 'More stages = more notches = deeper swirl.',
+  ratio: 'Compression ratio: 4 means 4 dB over threshold becomes 1 dB.', mk: 'Makeup gain after compression.',
+};
+const tipEl = $('#tip'); let hintOn = false;
+function placeTip(x, y) { const w = tipEl.offsetWidth, h = tipEl.offsetHeight; tipEl.style.left = Math.max(4, Math.min(innerWidth - w - 4, x + 14)) + 'px'; tipEl.style.top = Math.max(4, Math.min(innerHeight - h - 4, y + 16)) + 'px'; }
+function showHint(t, hint) { tipEl.textContent = t; tipEl.className = hint ? 'hint' : ''; tipEl.style.display = 'block'; hintOn = !!hint; }
+function hideHint() { hintOn = false; tipEl.style.display = 'none'; }
+document.addEventListener('pointermove', (e) => {
+  if (hintOn) { placeTip(e.clientX, e.clientY); return; }
+  const t = e.target.closest && e.target.closest('[data-tip]');
+  if (t && t.dataset.tip) { if (tipEl.textContent !== t.dataset.tip || tipEl.style.display !== 'block') showHint(t.dataset.tip, false); placeTip(e.clientX, e.clientY); }
+  else tipEl.style.display = 'none';
+});
+
+/* ------------------------------------------------------------- import */
+function importPrograms(bytes, label) {
+  const progs = ASM.splitPrograms(bytes), found = [];
+  progs.forEach((w, i) => {
+    if (!w.some((x) => (x >>> 0) !== 0x11 && (x >>> 0) !== 0 && (x >>> 0) !== 0xffffffff)) return;
+    let asm; try { asm = ASM.disassemble(w, { header: 'Imported from ' + label + ', program ' + (i + 1) }); } catch (e) { return; }
+    found.push({ slot: i, asm });
+  });
+  if (!found.length) { $('#statMsg').textContent = 'No programs found in ' + label + ' (all slots empty).'; return; }
+  if (bank.some(Boolean) && !confirm('Replace the pedal bank with ' + found.length + ' imported program(s)?')) return;
+  bank = new Array(8).fill(null);
+  found.forEach((f) => { bank[f.slot] = { name: 'Imported ' + (f.slot + 1), asm: f.asm }; });
+  selSlot = found[0].slot; renderSlots();
+  if (!customMode) $('#btnHand').click();
+  $('#code').value = found[0].asm; rebuild(); persist(); updateBankInfo();
+  $('#statMsg').textContent = 'Imported ' + found.length + ' program(s) from ' + label + ' into the bank; program ' + (found[0].slot + 1) + ' is loaded in hand-edit mode. Use the slot "Load" buttons for the others.';
+}
+$('#btnImport').onclick = () => $('#fileImport').click();
+$('#fileImport').onchange = async (e) => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const ext = (f.name.split('.').pop() || '').toLowerCase();
+    if (ext === 'hex' || ext === 'ihx') importPrograms(ASM.parseIntelHex(await f.text()), f.name);
+    else if (ext === 'bin') { const b = new Uint8Array(await f.arrayBuffer()); if (b.length < 512) throw new Error('file too small for an FV-1 image'); importPrograms(b, f.name); }
+    else { const t = await f.text(); if (!customMode) $('#btnHand').click(); $('#code').value = t; rebuild(); persist(); $('#statMsg').textContent = 'Loaded ' + f.name + ' in hand-edit mode.'; }
+  } catch (err) { $('#statMsg').textContent = 'Import failed: ' + err.message; }
+};
+$('#btnReadBank').onclick = async () => {
+  try { log('Reading chip…'); const b = await readChip(true); log('Read OK.'); importPrograms(b, 'the chip'); }
+  catch (e) { log('Error: ' + e.message); }
+};
+
+
+/* ------------------------------------------------------------- undo / redo / A-B */
+const hist = { u: [], r: [], cur: null }; let histTimer = 0;
+const snap = () => JSON.stringify(graph);
+function histPush() {
+  clearTimeout(histTimer); if (customMode) return;
+  const sn = snap(); if (sn === hist.cur) return;
+  if (hist.cur !== null) { hist.u.push(hist.cur); if (hist.u.length > 100) hist.u.shift(); }
+  hist.cur = sn; hist.r = [];
+}
+function histReset() { clearTimeout(histTimer); hist.u = []; hist.r = []; hist.cur = customMode ? null : snap(); }
+function applyHist(sn) { graph = JSON.parse(sn); renderGraph(); rebuild(); persist(); }
+function undo() { histPush(); if (!hist.u.length || customMode) return; hist.r.push(hist.cur); hist.cur = hist.u.pop(); applyHist(hist.cur); }
+function redo() { histPush(); if (!hist.r.length || customMode) return; hist.u.push(hist.cur); hist.cur = hist.r.pop(); applyHist(hist.cur); }
+const _changed = changed;
+changed = function () { _changed(); clearTimeout(histTimer); histTimer = setTimeout(histPush, 450); };
+$('#btnUndo2').onclick = undo; $('#btnRedo2').onclick = redo;
+document.addEventListener('keydown', (e) => {
+  const t = e.target, typing = t && (t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && !/range|checkbox/.test(t.type)));
+  if (typing || !(e.ctrlKey || e.metaKey)) return;
+  if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+  else if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); redo(); }
+});
+$('#chkOpt').onchange = () => rebuild();
+
+const ab = { A: null, B: null, cur: 'A' };
+function abState() { return { graph: clone(graph), custom: customMode ? $('#code').value : null }; }
+function abLoad(x) {
+  graph = clone(x.graph);
+  if (x.custom !== null) { if (!customMode) $('#btnHand').click(); $('#code').value = x.custom; }
+  else if (customMode) $('#btnHand').click();
+  renderGraph(); rebuild(); persist(); histReset();
+}
+$('#btnAB').onclick = () => {
+  ab[ab.cur] = abState(); const nx = ab.cur === 'A' ? 'B' : 'A';
+  if (!ab[nx]) ab[nx] = clone(ab[ab.cur]);
+  ab.cur = nx; abLoad(ab[nx]);
+  $('#btnAB').textContent = 'Editing ' + nx; $('#btnABcopy').textContent = 'Copy → ' + (nx === 'A' ? 'B' : 'A');
+  $('#btnAB').classList.toggle('on', nx === 'B');
+};
+$('#btnABcopy').onclick = () => { const o = ab.cur === 'A' ? 'B' : 'A'; ab[o] = abState(); $('#statMsg').textContent = 'Copied this version to ' + o + '. Click the A/B button to flip to it.'; };
+
+/* ------------------------------------------------------------- audition / render / legend */
+function auditionAsm(asm, label) {
+  if (!engine) { $('#statMsg').textContent = 'Start the audio first.'; return; }
+  const r = ASM.assemble(asm); if (r.errors.length) { $('#statMsg').textContent = 'Cannot audition: ' + r.errors[0].msg; return; }
+  engine.fv1.port.postMessage({ type: 'taps', regs: [] });
+  engine.fv1.port.postMessage({ type: 'program', words: r.words, xfade: true });
+  $('#statMsg').textContent = 'Auditioning ' + label + ' (short crossfade, like flipping the program switch). Edit anything or press “Audition editor patch” to go back.';
+}
+$('#btnAudEd').onclick = () => { if (!engine || !last) return; engine.fv1.port.postMessage({ type: 'program', words: last.r.words, xfade: true }); sendTaps(); $('#statMsg').textContent = 'Back on the editor patch.'; };
+function wavBytes(L, R, sr) {
+  const n = L.length, b = new DataView(new ArrayBuffer(44 + n * 4));
+  const w = (o, t) => { for (let i = 0; i < t.length; i++) b.setUint8(o + i, t.charCodeAt(i)); };
+  w(0, 'RIFF'); b.setUint32(4, 36 + n * 4, true); w(8, 'WAVEfmt '); b.setUint32(16, 16, true); b.setUint16(20, 1, true); b.setUint16(22, 2, true);
+  b.setUint32(24, sr, true); b.setUint32(28, sr * 4, true); b.setUint16(32, 4, true); b.setUint16(34, 16, true); w(36, 'data'); b.setUint32(40, n * 4, true);
+  const q = (v) => Math.max(-32768, Math.min(32767, Math.round(v * 32767)));
+  for (let i = 0; i < n; i++) { b.setInt16(44 + i * 4, q(L[i]), true); b.setInt16(46 + i * 4, q(R[i]), true); }
+  return new Uint8Array(b.buffer);
+}
+let EmuCls = null;
+function renderWav(data, sr) {
+  if (!data || !data.length) { $('#statMsg').textContent = 'Nothing to render: record or load a loop first.'; return; }
+  if (!last) return;
+  $('#statMsg').textContent = 'Rendering…';
+  setTimeout(() => {
+    try {
+      EmuCls = EmuCls || new Function(EMU_SRC + '\nreturn FV1Emu;')();
+      const emu = new EmuCls(sr); emu.load(last.r.words);
+      const tail = sr * 3, n = data.length + tail, L = new Float32Array(n), R = new Float32Array(n);
+      for (let i = 0; i < n; i++) {
+        emu.reg[0x10] = pots[0]; emu.reg[0x11] = pots[1]; emu.reg[0x12] = pots[2];
+        const x = i < data.length ? data[i] : 0, o = emu.step(x, x); L[i] = o[0]; R[i] = o[1];
+      }
+      download('fv1-render.wav', wavBytes(L, R, sr), 'audio/wav');
+      $('#statMsg').textContent = 'Rendered ' + (n / sr).toFixed(1) + ' s (loop + 3 s tail) with the current patch and knob positions.';
+    } catch (e) { $('#statMsg').textContent = 'Render failed: ' + e.message; }
+  }, 30);
+}
+$('#btnRender').onclick = async () => { await startAudio(); engine.looper.port.postMessage({ type: 'dump' }); };
+$('#btnLegend').onclick = () => {
+  const lines = ['FV-1 pedal knob legend', ''];
+  bank.forEach((s, i) => {
+    if (!s) return;
+    lines.push('Program ' + (i + 1) + ' (S2 S1 S0 = ' + [(i >> 2) & 1, (i >> 1) & 1, i & 1].join(' ') + '): ' + s.name);
+    for (let k = 0; k < 3; k++) {
+      let t = s.legend && s.legend[k] && s.legend[k].length ? s.legend[k].join(', ') : '';
+      if (!t && !s.legend) t = new RegExp('\\bpot' + k + '\\b', 'i').test(s.asm) ? '(used – hand-written code)' : '';
+      lines.push('   POT' + k + ': ' + (t || '—'));
+    }
+    lines.push('');
+  });
+  if (lines.length === 2) lines.push('No programs stored in the bank yet.');
+  download('fv1-knob-legend.txt', lines.join('\n'), 'text/plain');
+};
+
+/* ------------------------------------------------------------- boot */
+restore();
+if (customMode) { $('#code').readOnly = false; $('#btnHand').textContent = 'Back to graph'; $('#btnHand').classList.add('on'); $('#banner').style.display = 'block'; $('#banner').textContent = 'Hand-editing: the code on the right is driving the sound. Graph edits are ignored until you press “Back to graph”.'; }
+graph.nodes.forEach((n) => { const m = /^n(\d+)$/.exec(n.id); if (m) nextId = Math.max(nextId, +m[1] + 1); });
+buildPalette(); renderGraph(); renderSlots(); rebuild(); histReset(); requestAnimationFrame(fitView);
+window.__fv1 = { get graph() { return graph; }, rebuild, undo, redo, auditionAsm, get last() { return last; }, get engine() { return engine; }, startAudio };
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+const fs=require('fs');
+const rd=f=>fs.readFileSync(__dirname+'/src/'+f,'utf8');
+let html=rd('app.html');
+const rep=(m,txt)=>{ if(!html.includes(m)) throw new Error('marker '+m); html=html.split(m).join(txt.replace(/<\/script/gi,'<\\/script')); };
+rep('/*@@EMU@@*/',rd('fv1emu.js'));
+rep('/*@@WORKLET@@*/',rd('worklet.js'));
+rep('/*@@FV1ASM@@*/',rd('fv1asm.js'));
+rep('/*@@PATCH@@*/',rd('patch.js'));
+fs.writeFileSync(__dirname+'/fv1-studio.html',html);
+console.log('built',html.length,'bytes');
