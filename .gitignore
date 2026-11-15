@@ -2,3 +2,4 @@ node_modules/
 test/gen/
 test/**/*.png
 *.wav
+.claude/skills/impeccable/scripts/bin/
