@@ -1,10 +1,10 @@
-const { chromium } = require('/opt/npm-tools/node_modules/playwright');
+const { chromium } = require('playwright');
 const fs=require('fs');
 (async()=>{
-  const b=await chromium.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox','--autoplay-policy=no-user-gesture-required']});
+  const b=await chromium.launch({args:['--no-sandbox','--autoplay-policy=no-user-gesture-required']});
   const ctx=await b.newContext({viewport:{width:1500,height:900},acceptDownloads:true});const p=await ctx.newPage();
   const logs=[];p.on('pageerror',e=>logs.push('PAGEERROR: '+e.message));p.on('console',m=>{if(m.type()==='error')logs.push('console.error: '+m.text())});p.on('dialog',d=>d.accept());
-  await p.goto('file:///home/claude/fv1/fv1-studio.html');await p.waitForTimeout(400);
+  await p.goto('file://'+require('path').resolve(__dirname,'../../fv1-studio.html'));await p.waitForTimeout(400);
   const names=await p.$$eval('#preset option',o=>o.map(x=>x.value||x.textContent));
   for(const n of names){await p.selectOption('#preset',n);await p.waitForTimeout(120);const e=await p.textContent('#errs');if(e)console.log('ERR',n,e);}
   console.log('presets ok',names.length);

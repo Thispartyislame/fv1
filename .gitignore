@@ -1,0 +1,4 @@
+node_modules/
+test/gen/
+test/**/*.png
+*.wav

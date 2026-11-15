@@ -10,10 +10,10 @@ const hzOf = (kf) => kf * FS / (2 * Math.PI * 131072);
 const MAX_LFO_HZ = hzOf(511);
 
 class Ctx {
-  constructor() { this.code = []; this.setupLines = []; this.memLines = []; this.memTop = 0; this.regN = 0; this.lfoUsed = [null, null]; this.rmpUsed = [null, null]; this.n = 0; }
+  constructor() { this.code = []; this.setupLines = []; this.memLines = []; this.memTop = 0; this.regN = 0; this.lfoUsed = [null, null]; this.rmpUsed = [null, null]; this.labelN = 0; }
   e(s) { this.code.push(s); }
   c(s) { this.code.push('; ' + s); }
-  reg() { if (this.regN >= 32) throw new Error('Out of registers (32 max)'); return 'REG' + (this.regN++); }
+  reg() { return 'REG' + (this.regN++); }   // virtual: the 32-register limit is checked in generate(), after sharing
   mem(name, size, align) {
     align = align || 1;
     if (this.memTop % align) {
@@ -252,9 +252,11 @@ const NODE_TYPES = {
         const kOf = (hz) => Math.max(1, Math.min(32767, Math.round(hz * amp * 16384 / FS)));
         c.setup(`wldr rmp${u},${kOf(n.p.rate)},${amp}`);
         if (ins.rate) { c.e(`rdax ${ins.rate},${cc(Math.min(1.99, kOf(n.p.rate) / 32768))}`); c.e(`wrax rmp${u}_rate,0`); }
-        c.e(`cho rdal,rmp${u}`);                                  // 0..1 ramp
-        if (shape === 1) { c.e('sof 1.99993,-1.0'); c.e('absa'); }  // triangle 0..1
-        c.e(`sof ${f6(hi - lo)},${f6(Math.min(0.999, lo))}`);
+        c.e(`cho rdal,rmp${u}`);                                  // ramp, 0..amp/8192 = 0..0.25
+        if (shape === 1) { c.e('sof 1.99993,-0.25'); c.e('absa'); } // triangle 0..0.25
+        let g = 4 * (hi - lo);                                    // bring it up to lo..hi
+        while (g > 2.0001) { c.e('sof 1.99993,0'); g /= 1.99993; }
+        c.e(`sof ${cc(g)},${f6(Math.min(0.999, lo))}`);
       } else {
         const l = c.lfo('LFO');
         c.setup(`wlds sin${l},${kfOf(n.p.rate)},32767`);
@@ -325,9 +327,8 @@ function gainStages(c, g) {                     // multiply ACC by g (>=1) with 
   while (rem > 1.9999) { c.e('sof 1.99993,0'); rem /= 1.99993; }
   if (rem > 1.001) c.e(`sof ${cc(rem)},0`);
 }
-let labelSeq = 0;
 function envFollow(c, sig, atkMs, relMs) {      // rectifier + attack/release smoothing; returns env register
-  const env = c.reg(), k = ++labelSeq;
+  const env = c.reg(), k = ++c.labelN;
   const a = Math.max(1 / 16384, 1 - Math.exp(-1 / (FS * atkMs / 1000))), r = Math.max(1 / 16384, 1 - Math.exp(-1 / (FS * relMs / 1000)));
   c.e(`rdax ${sig},1.0`); c.e('absa'); c.e(`rdax ${env},-1.0`);
   c.e(`skp neg,rel${k}`); c.e(`sof ${f6(a)},0`); c.e(`skp 0,dn${k}`);
@@ -382,11 +383,12 @@ Object.assign(NODE_TYPES, {
       c.e(`rdax ${env},1.0`); c.e(`sof 1.0,${f6(-Math.min(0.99, n.p.thr))}`);
       gainStages(c, Math.min(64, 1 / (n.p.thr * 0.6)));
       c.e('skp gez,1'); c.e('clr');
-      c.e(`rdfx ${gs},${f6(kPole(120))}`); c.e(`wrax ${gs},1.0`);
-      if (n.p.floor > 0.004) c.e(`sof ${cc(1 - n.p.floor)},${f6(Math.min(0.999, n.p.floor))}`);
-      c.e(`wrax ${gs},0`);
-      // gs holds the smoothed gate but may have been rewritten with the floor; use the register as the multiplier
-      c.e(`rdax ${ins.in},1.0`); c.e(`mulx ${gs}`); c.e(`wrax ${o},0`);
+      c.e(`rdfx ${gs},${f6(kPole(120))}`);                      // gs = smoothed open/closed state (0..1)
+      let mul = gs;
+      if (n.p.floor > 0.004) {                                  // closed level: the multiplier is floor..1, kept apart from the filter state
+        mul = c.reg(); c.e(`wrax ${gs},1.0`); c.e(`sof ${cc(1 - n.p.floor)},${f6(Math.min(0.999, n.p.floor))}`); c.e(`wrax ${mul},0`);
+      } else c.e(`wrax ${gs},0`);
+      c.e(`rdax ${ins.in},1.0`); c.e(`mulx ${mul}`); c.e(`wrax ${o},0`);
       return { out: o };
     },
   },
@@ -601,6 +603,31 @@ function defaultParams(type) {
 }
 
 // graph: {nodes:[{id,type,x,y,p}], edges:[{a:'n1.out', b:'n2.in'}]}
+// Make a graph from a file / localStorage safe to render and generate: drops unknown blocks and dangling
+// cables, fills in settings added since it was saved, and keeps every setting inside its range.
+function sanitize(g) {
+  const nodes = [], byId = {};
+  (g && Array.isArray(g.nodes) ? g.nodes : []).forEach((n) => {
+    const def = n && NODE_TYPES[n.type];
+    if (!def || typeof n.id !== 'string' || !n.id || n.id.includes('.') || byId[n.id]) return;
+    if (def.unique && nodes.some((m) => m.type === n.type)) return;
+    const p = defaultParams(n.type);
+    def.params.forEach((d) => { const v = n.p && n.p[d.id]; if (typeof v === 'number' && Number.isFinite(v)) p[d.id] = Math.max(d.min, Math.min(d.max, v)); });
+    const m = { id: n.id, type: n.type, x: Math.max(0, +n.x || 0), y: Math.max(0, +n.y || 0), p };
+    nodes.push(m); byId[m.id] = m;
+  });
+  const edges = [], fed = {};
+  const has = (key, side) => {
+    if (typeof key !== 'string') return false;
+    const [id, port] = key.split('.'), n = byId[id];
+    return !!n && NODE_TYPES[n.type][side].some((x) => x.id === port);
+  };
+  (g && Array.isArray(g.edges) ? g.edges : []).forEach((e) => {
+    if (!e || !has(e.a, 'outputs') || !has(e.b, 'inputs') || fed[e.b] || e.a.split('.')[0] === e.b.split('.')[0]) return;
+    fed[e.b] = true; edges.push({ a: e.a, b: e.b });
+  });
+  return { nodes, edges };
+}
 // ---------- optimizer: peephole + register sharing ----------
 function optimize(code, setup, keep) {
   let lines = code.slice(), removed = 0;
@@ -678,10 +705,24 @@ function generate(graph, opts) {
     const used = new Set((code.join('\n').match(/\bREG\d+\b/g) || []));
     stats.regsBefore = c.regN; stats.regs = used.size; stats.saved = r.removed; stats.regsSaved = r.saved;
   }
+  // The chip has REG0..REG31. Blocks allocate freely; what counts is what is left after register sharing.
+  let setup = c.setupLines;
+  const order = [];
+  setup.concat(code).forEach((l) => { if (/^\s*;/.test(l)) return; (l.match(/\bREG\d+\b/g) || []).forEach((r) => { if (!order.includes(r)) order.push(r); }); });
+  if (order.length > 32) {
+    return { asm: '', errors: ['Out of registers: this patch needs ' + order.length + ', the FV-1 has 32.' + (opts.optimize === false ? ' Turn on "Optimize code" to share registers.' : ' Remove a block or two.')], stats: {} };
+  }
+  stats.regs = order.length;
+  if (order.some((r) => +r.slice(3) > 31)) {            // squeeze the survivors into REG0..REG31
+    const ren = {}; order.forEach((r, i) => { ren[r] = 'REG' + i; });
+    const fix = (l) => (/^\s*;/.test(l) ? l : l.replace(/\bREG\d+\b/g, (r) => ren[r] || r));
+    code = code.map(fix); setup = setup.map(fix);
+    Object.keys(taps).forEach((id) => { if (ren[taps[id]]) taps[id] = ren[taps[id]]; else delete taps[id]; });
+  }
   const hdr = ['; Generated by FV-1 Studio', '; FV-1 @ 32 kHz'];
   let asm = hdr.join('\n') + '\n';
   if (c.memLines.length) asm += '\n' + c.memLines.join('\n') + '\n';
-  if (c.setupLines.length) asm += '\nskp run,setup_done\n' + c.setupLines.join('\n') + '\nsetup_done:\n';
+  if (setup.length) asm += '\nskp run,setup_done\n' + setup.join('\n') + '\nsetup_done:\n';
   asm += '\n' + code.join('\n') + '\n';
   // pot usage legend: which blocks each knob feeds
   const legend = [[], [], []];
@@ -770,7 +811,7 @@ const PRESETS = {
   },
 };
 
-const api = { NODE_TYPES, PRESETS, generate, defaultParams, FS, MAX_LFO_HZ, DESC, portTip };
+const api = { NODE_TYPES, PRESETS, generate, sanitize, defaultParams, FS, MAX_LFO_HZ, DESC, portTip };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 else root.FV1PATCH = api;
 })(typeof self !== 'undefined' ? self : this);

@@ -1,0 +1,11 @@
+{
+  "name": "fv1-studio",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Visual patch editor, emulator, looper and EEPROM programmer for the Spin FV-1 DSP",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node test/check.js",
+    "test:ui": "node test/ui.js"
+  }
+}

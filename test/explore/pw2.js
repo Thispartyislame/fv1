@@ -1,6 +1,6 @@
-const { chromium } = require('/opt/npm-tools/node_modules/playwright');
+const { chromium } = require('playwright');
 (async()=>{
-  const b=await chromium.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
+  const b=await chromium.launch({args:['--no-sandbox']});
   const ctx=await b.newContext({viewport:{width:1500,height:900},acceptDownloads:true});
   const p=await ctx.newPage();
   const logs=[];p.on('console',m=>logs.push(m.type()+': '+m.text()));p.on('pageerror',e=>logs.push('PAGEERROR: '+e.message));
@@ -23,7 +23,7 @@ const { chromium } = require('/opt/npm-tools/node_modules/playwright');
     const port={readable,writable,open:async()=>{},close:async()=>{}};
     Object.defineProperty(navigator,'serial',{value:{requestPort:async()=>port},configurable:true});
   });
-  await p.goto('file:///home/claude/fv1/fv1-studio.html');
+  await p.goto('file://'+require('path').resolve(__dirname,'../../fv1-studio.html'));
   await p.click('.tabs button[data-tab="chip"]');
   // store Echo in slot 1, Plate Reverb in slot 3
   await p.click('#slots .slot:nth-child(1) .acts button:nth-child(1)');
@@ -65,6 +65,6 @@ const { chromium } = require('/opt/npm-tools/node_modules/playwright');
   const mid=await p.$$eval('#cables path:not(.hit)',n=>n.length);
   console.log('cables before/after detaching one input:',before,mid);
   console.log(logs.join('\n')||'(no console output)');
-  await p.screenshot({path:'/home/claude/fv1/test/shot4.png'});
+  await p.screenshot({path:__dirname+'/shot4.png'});
   await b.close();
 })();

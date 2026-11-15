@@ -1,4 +1,4 @@
-const A=require('../src/fv1asm.js'),E=require('../src/fv1emu.js'),P=require('../src/patch.js');
+const A=require('../../src/fv1asm.js'),E=require('../../src/fv1emu.js'),P=require('../../src/patch.js');
 const g=P.PRESETS['Chorus'];g.nodes[2].p.mix=1;
 const gen=P.generate(g);const r=A.assemble(gen.asm);const e=new E(32000);e.load(r.words);
 const L=[];for(let i=0;i<96000;i++){e.reg[0x12]=1;const x=(i%2000===0)?0.8:0;L.push(e.step(x,x)[0]);}

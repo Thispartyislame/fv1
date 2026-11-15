@@ -1,10 +1,10 @@
-const { chromium } = require('/opt/npm-tools/node_modules/playwright');
+const { chromium } = require('playwright');
 const fs=require('fs');
 (async()=>{
-  const b=await chromium.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});
+  const b=await chromium.launch({args:['--no-sandbox']});
   const p=await (await b.newContext({viewport:{width:1500,height:900}})).newPage();
   const logs=[];p.on('pageerror',e=>logs.push('PAGEERROR: '+e.message));p.on('dialog',d=>d.accept());
-  await p.goto('file:///home/claude/fv1/fv1-studio.html');await p.waitForTimeout(400);
+  await p.goto('file://'+require('path').resolve(__dirname,'../../fv1-studio.html'));await p.waitForTimeout(400);
   // all presets compile
   const names=await p.$$eval('#preset option',o=>o.map(x=>x.value||x.textContent));
   for(const n of names){await p.selectOption('#preset',n);await p.waitForTimeout(150);
@@ -22,15 +22,15 @@ const fs=require('fs');
   await p.mouse.up();
   console.log('after drop targets',await p.$$eval('.dot.tgt',e=>e.length));
   // import: hex from generated bank
-  const A=require('../src/fv1asm.js'),P=require('../src/patch.js');
+  const A=require('../../src/fv1asm.js'),P=require('../../src/patch.js');
   const bank=[];for(const k of ['Echo','Plate Reverb','Auto-Wah','Phaser','Metal (Fromel-style)']){bank.push(A.assemble(P.generate(P.PRESETS[k]).asm).words);}
   const img=A.buildBankImage(bank);fs.writeFileSync('imp.hex',A.toIntelHex(img));fs.writeFileSync('imp.bin',Buffer.from(img));
   for(const f of ['imp.hex','imp.bin']){
     await p.click('#btnHand').catch(()=>{});
-    await p.setInputFiles('#fileImport','/home/claude/fv1/test/'+f);await p.waitForTimeout(500);
+    await p.setInputFiles('#fileImport',__dirname+'/'+f);await p.waitForTimeout(500);
     console.log(f,'|',await p.textContent('#statMsg'),'| slots filled',await p.$$eval('.slot input[type=text], .slot input:not([type])',e=>e.filter(x=>x.value).length),'errs',(await p.textContent('#errs'))||'-','instr',await p.textContent('#sI'));
   }
-  await p.setInputFiles('#fileImport','/home/claude/fv1/test/gen/Echo.spn');await p.waitForTimeout(300);
+  await p.setInputFiles('#fileImport',__dirname+'/gen/Echo.spn');await p.waitForTimeout(300);
   console.log('spn:',await p.textContent('#statMsg'),'instr',await p.textContent('#sI'));
   console.log(logs.join('\n')||'no page errors');
   await b.close();

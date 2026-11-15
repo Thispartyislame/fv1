@@ -1,4 +1,4 @@
-const A=require('../src/fv1asm.js'),E=require('../src/fv1emu.js'),P=require('../src/patch.js');
+const A=require('../../src/fv1asm.js'),E=require('../../src/fv1emu.js'),P=require('../../src/patch.js');
 const N=(id,type,p)=>({id,type,x:0,y:0,p:Object.assign(P.defaultParams(type),p||{})});
 function run(g,secs,inFn){const gen=P.generate(g);const r=A.assemble(gen.asm);const e=new E(32000);e.load(r.words);const n=secs*32000,L=new Float64Array(n);for(let i=0;i<n;i++)L[i]=e.step(inFn(i),0)[0];return L;}
 function peak(L,s,t){let best=0,bf=0;for(let f=50;f<1500;f+=1){let re=0,im=0;for(let i=s;i<t;i+=2){const w=0.5-0.5*Math.cos(2*Math.PI*(i-s)/(t-s));re+=L[i]*w*Math.cos(2*Math.PI*f*i/32000);im+=L[i]*w*Math.sin(2*Math.PI*f*i/32000);}const m=re*re+im*im;if(m>best){best=m;bf=f;}}return bf;}

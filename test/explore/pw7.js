@@ -1,9 +1,9 @@
-const { chromium } = require('/opt/npm-tools/node_modules/playwright');
+const { chromium } = require('playwright');
 (async()=>{
-  const b=await chromium.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox','--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream','--autoplay-policy=no-user-gesture-required']});
+  const b=await chromium.launch({args:['--no-sandbox','--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream','--autoplay-policy=no-user-gesture-required']});
   const ctx=await b.newContext({viewport:{width:1366,height:768},permissions:['microphone']});const p=await ctx.newPage();
   const errs=[];p.on('pageerror',e=>errs.push(e.message));
-  await p.goto('file:///home/claude/fv1/fv1-studio.html');await p.waitForTimeout(500);
+  await p.goto('file://'+require('path').resolve(__dirname,'../../fv1-studio.html'));await p.waitForTimeout(500);
   const names=await p.$$eval('#preset option',o=>o.map(x=>x.value||x.textContent));
   for(const n of names){await p.selectOption('#preset',n);await p.waitForTimeout(300);
     const r=await p.evaluate(()=>{const cv=document.querySelector('#canvas').getBoundingClientRect();

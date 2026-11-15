@@ -1,4 +1,4 @@
-const P=require('../src/patch.js'),A=require('../src/fv1asm.js'),E=require('../src/fv1emu.js');
+const P=require('../../src/patch.js'),A=require('../../src/fv1asm.js'),E=require('../../src/fv1emu.js');
 function run(g,amp,N=64000){const a=A.assemble(P.generate(g).asm);const e=new E(32000);e.load(a.words);let q=0,qi=0,c=0;
  for(let i=0;i<N;i++){const t=i/32000;const env=Math.exp(-((t*2)%1)*3);const x=amp*env*(Math.sin(2*Math.PI*196*t)+0.5*Math.sin(2*Math.PI*392*t+1)+0.3*Math.sin(2*Math.PI*588*t));
   e.reg[0x10]=0.5;e.reg[0x11]=0.5;e.reg[0x12]=0.5;const y=e.step(x,x)[0];if(i>16000){q+=y*y;qi+=x*x;c++;}}

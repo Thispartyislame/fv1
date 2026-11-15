@@ -387,7 +387,7 @@ function disassemble(words, opts) {
   let last = -1;
   for (let i = 0; i < words.length; i++) if ((words[i] >>> 0) !== NOP) last = i;
   const out = [];
-  if (!opts.noHeader) out.push('; Disassembled by FV-1 Studio', '; Delay addresses are plain numbers (no MEM names).');
+  if (!opts.noHeader) out.push('; ' + (opts.header || 'Disassembled by FV-1 Studio'), '; Delay addresses are plain numbers (no MEM names).');
   const hex6 = (v) => '$' + (v >>> 0).toString(16).padStart(6, '0');
   for (let i = 0; i <= last; i++) {
     const w = words[i] >>> 0, op = w & 31;
@@ -466,7 +466,7 @@ function splitPrograms(bytes) {
   for (let p = 0; p < nprog; p++) {
     const w = new Uint32Array(128).fill(0x11);
     for (let i = 0; i < 128; i++) {
-      const o = p * 512 + i * 4; if (o + 3 >= bytes.length + 3 && o >= bytes.length) break;
+      const o = p * 512 + i * 4; if (o >= bytes.length) break;
       w[i] = (((bytes[o] || 0) << 24) | ((bytes[o + 1] || 0) << 16) | ((bytes[o + 2] || 0) << 8) | (bytes[o + 3] || 0)) >>> 0;
     }
     progs.push(w);

@@ -1,4 +1,4 @@
-const P=require('../src/patch.js'),A=require('../src/fv1asm.js'),E=require('../src/fv1emu.js');
+const P=require('../../src/patch.js'),A=require('../../src/fv1asm.js'),E=require('../../src/fv1emu.js');
 const N=(id,type,p)=>({id,type,x:0,y:0,p:Object.assign(P.defaultParams(type),p||{})});
 function run(g,f,n){const r=P.generate(g);const a=A.assemble(r.asm);if(a.errors.length)throw JSON.stringify(a.errors)+r.asm;const e=new E(32000);e.load(a.words);const o=[];for(let i=0;i<n;i++)o.push(e.step(f(i),f(i))[0]);return o;}
 const gz=(x,f,s,t)=>{let re=0,im=0;for(let i=s;i<t;i++){const w=2*Math.PI*f*i/32000;re+=x[i]*Math.cos(w);im+=x[i]*Math.sin(w);}return Math.hypot(re,im)/(t-s)*2;};

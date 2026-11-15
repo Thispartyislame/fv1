@@ -1,4 +1,4 @@
-const A=require('../src/fv1asm.js'),E=require('../src/fv1emu.js'),P=require('../src/patch.js');
+const A=require('../../src/fv1asm.js'),E=require('../../src/fv1emu.js'),P=require('../../src/patch.js');
 function sim(asm, secs, inFn, pots){
   const r=A.assemble(asm); if(r.errors.length){console.log(asm);throw new Error(JSON.stringify(r.errors));}
   const e=new E(32000); e.onwarn=m=>console.log('WARN',m); e.load(r.words);

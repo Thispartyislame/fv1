@@ -97,13 +97,13 @@ class LooperProc extends AudioWorkletProcessor {
   process(inputs, outputs) {
     const inp = inputs[0], out = outputs[0][0];
     const iL = inp && inp[0];
-    const s = this.state;
+    let s = this.state;
     for (let i = 0; i < out.length; i++) {
       const x = iL ? iL[i] : 0;
       let y = this.live ? x * this.liveGain : 0;
       if (s === 'rec') {
         this.buf[this.recPos++] = x;
-        if (this.recPos >= this.max) { this.finishRec(); break; }
+        if (this.recPos >= this.max) { this.finishRec(); s = this.state; this.report(); }   // 60 s limit: start looping
       } else if ((s === 'play' || s === 'overdub') && this.len > 0) {
         const p = this.pos;
         y += this.buf[p] * this.loopGain;

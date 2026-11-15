@@ -1,4 +1,4 @@
-const A=require('../src/fv1asm.js'),E=require('../src/fv1emu.js'),P=require('../src/patch.js');
+const A=require('../../src/fv1asm.js'),E=require('../../src/fv1emu.js'),P=require('../../src/patch.js');
 function mk(nodes,edges){return {nodes,edges};}
 const N=(id,type,x,y,p)=>({id,type,x,y,p:Object.assign(P.defaultParams(type),p||{})});
 function run(g,secs,inFn,pots){const gen=P.generate(g);if(gen.errors.length)throw new Error(gen.errors[0]);const r=A.assemble(gen.asm);if(r.errors.length)throw new Error(JSON.stringify(r.errors)+gen.asm);

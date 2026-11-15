@@ -1,4 +1,4 @@
-const A=require('../src/fv1asm.js'),E=require('../src/fv1emu.js'),P=require('../src/patch.js');
+const A=require('../../src/fv1asm.js'),E=require('../../src/fv1emu.js'),P=require('../../src/patch.js');
 const N=(id,type,p)=>({id,type,x:0,y:0,p:Object.assign(P.defaultParams(type),p||{})});
 function run(g,secs,inFn,pots){const gen=P.generate(g);if(gen.errors.length)throw new Error(gen.errors[0]);const r=A.assemble(gen.asm);if(r.errors.length)throw new Error(JSON.stringify(r.errors)+gen.asm);
  const e=new E(32000);e.onwarn=m=>console.log('WARN',m);e.load(r.words);const n=secs*32000,L=new Float64Array(n);

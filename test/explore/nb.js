@@ -1,4 +1,4 @@
-const P=require('../src/patch.js'),A=require('../src/fv1asm.js'),E=require('../src/fv1emu.js');
+const P=require('../../src/patch.js'),A=require('../../src/fv1asm.js'),E=require('../../src/fv1emu.js');
 function run(name,gen,sigf,pots=[0.5,0.5,0.5],N=32000*2){
   const g=P.PRESETS[name]||gen;const r=P.generate(g);if(r.errors.length)throw name+r.errors;
   const a=A.assemble(r.asm);if(a.errors.length)throw a.errors;

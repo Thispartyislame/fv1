@@ -1,7 +1,10 @@
 /* FV-1 emulator core. Executes assembled 32-bit machine words, one program pass per sample.
  * Floating point (not bit-exact): ACC/registers saturate at about +/-1 like the real chip.
- * Runs inside an AudioWorklet and in Node for tests. */
+ * Runs inside an AudioWorklet and in Node for tests.
+ * step() returns the same 2-element array every call (no per-sample garbage): read it before the next step(). */
 const S16 = (v) => ((v & 0x8000) ? v - 0x10000 : v);
+const MAXV = 1 - 1 / 8388608, TWO_PI = 6.283185307179586;
+const clamp = (x) => (x > MAXV ? MAXV : (x < -1 ? -1 : x));
 class FV1Emu {
   constructor(fs) {
     this.fs = fs || 32000;
@@ -11,10 +14,9 @@ class FV1Emu {
     this.wp = 0;
     this.prog = [];
     this.run = false;
-    this.sinPhase = [0, 0];
-    this.sinK = [0, 0];       // Kf (0..511)
-    this.sinAmp = [0, 0];     // WLDS amplitude (swing is +/- amp/2 samples)
+    this.sinPhase = [0, 0];   // rate and amplitude live in the SINn_RATE / SINn_RANGE registers
     this.rampPos = [0, 0];    // ramp LFO positions, units of 1/16384 sample
+    this.out = [0, 0];
     this.warned = {};
     this.onwarn = null;
     this.acc = 0; this.pacc = 0; this.lr = 0;
@@ -25,7 +27,8 @@ class FV1Emu {
     const S = FV1Emu.s, prog = [];
     for (let i = 0; i < words.length; i++) {
       const w = words[i] >>> 0, op = w & 31;
-      const o = { op };
+      // every decoded instruction has the same shape so the interpreter loop stays monomorphic (fast)
+      const o = { op, addr: 0, c: 0, d: 0, r: 0, m: 0, cond: 0, n: 0, ramp: false, lfo: 0, K: 0, sel: 0, freq: 0, amp: 0, type: 0, flags: 0 };
       switch (op) {
         case 0: case 2: case 3: o.addr = (w >>> 5) & 0x7fff; o.c = S((w >>> 21) & 0x7ff, 11) / 512; break;
         case 1: o.c = S((w >>> 21) & 0x7ff, 11) / 512; break;
@@ -45,30 +48,23 @@ class FV1Emu {
       }
       prog.push(o);
     }
-    this.prog = prog;
+    // Trailing NOPs (SKP 0,0 padding) do nothing except leave PACC equal to ACC, so they are not executed.
+    let n = prog.length;
+    while (n > 0 && (words[n - 1] >>> 0) === 0x11) n--;
+    this.padded = n < prog.length;
+    this.prog = prog.slice(0, n);
     this.run = false;
   }
   resetState(clearMem) {
     this.reg.fill(0); this.acc = this.pacc = this.lr = 0; this.run = false;
-    this.sinPhase = [0, 0]; this.sinK = [0, 0]; this.sinAmp = [0, 0]; this.rampPos = [0, 0];
+    this.sinPhase = [0, 0]; this.rampPos = [0, 0];
     if (clearMem) this.mem.fill(0);
   }
   _w(msg) { if (!this.warned[msg]) { this.warned[msg] = 1; if (this.onwarn) this.onwarn(msg); } }
   // one sample. returns [dacL, dacR]
   step(adcL, adcR) {
-    const reg = this.reg, mem = this.mem, N = this.N, MASK = N - 1, prog = this.prog;
-    const MAXV = 1 - 1 / 8388608;
-    const clamp = (x) => x > MAXV ? MAXV : (x < -1 ? -1 : x);
+    const reg = this.reg, mem = this.mem, MASK = this.N - 1, prog = this.prog, sinPhase = this.sinPhase;
     reg[0x14] = adcL; reg[0x15] = adcR;
-    // LFOs advance
-    const s0 = Math.sin(this.sinPhase[0]), c0 = Math.cos(this.sinPhase[0]);
-    const s1 = Math.sin(this.sinPhase[1]), c1 = Math.cos(this.sinPhase[1]);
-    const sinv = [s0, s1], cosv = [c0, c1];
-    // SINn_RATE register override (assumed mapping: 0..1 -> Kf 0..511)
-    for (let l = 0; l < 2; l++) {
-      const rv = reg[l * 2];
-      if (rv !== 0) this.sinK[l] = Math.max(0, Math.min(511, Math.floor(rv * 512)));
-    }
     const wp = this.wp;
     let acc = this.acc, pacc = this.pacc, lr = this.lr;
     const runFlag = this.run;
@@ -106,7 +102,7 @@ class FV1Emu {
         }
         case 18:
           if (o.ramp) { reg[4 + 2 * o.lfo] = o.K / 32768; reg[5 + 2 * o.lfo] = o.sel; this.rampPos[o.lfo] = 0; }
-          else { this.sinK[o.lfo] = o.freq; this.sinAmp[o.lfo] = o.amp; }
+          else { reg[2 * o.lfo] = o.freq / 512; reg[1 + 2 * o.lfo] = o.amp / 32768; }   // SINn_RATE, SINn_RANGE
           break;
         case 19: this.rampPos[o.lfo] = 0; break;
         case 20: {
@@ -122,7 +118,7 @@ class FV1Emu {
               break;
             }
             const p = (flags & 0x10) ? (pos0 + units / 2) % units : pos0;   // RPTR2: second read pointer, half a cycle away
-            if (o.type === 3) { acc = clamp(p / units); break; }
+            if (o.type === 3) { acc = clamp(p / 134217728); break; }      // CHO RDAL: position in samples / 8192 (0..0.5 at amplitude 4096)
             const off = (flags & 8) ? units - p : p;
             const ii = Math.floor(off / 16384), fr = (off % 16384) / 16384;
             const coef = (flags & 4) ? 1 - fr : fr;
@@ -130,9 +126,10 @@ class FV1Emu {
             else acc = clamp(acc * coef + S16(o.addr) / 32768);
             break;
           }
-          const val = (flags & 1) ? cosv[l] : sinv[l];
-          if (o.type === 3) { acc = clamp(val); break; }                   // CHO RDAL
-          let pos = val * this.sinAmp[l] / 2;                              // swing is +/- amp/2 samples
+          const amp = reg[1 + 2 * l] * 32768;                              // SINn_RANGE
+          const val = (flags & 1) ? Math.cos(sinPhase[l]) : Math.sin(sinPhase[l]);
+          if (o.type === 3) { acc = clamp(val * amp / 32767); break; }     // CHO RDAL: sine scaled by its amplitude
+          let pos = val * amp / 2;                                         // swing is +/- amp/2 samples
           if (flags & 8) pos = -pos;                                       // COMPA
           const i = Math.floor(pos), fr = pos - i;
           const coef = (flags & 4) ? (1 - fr) : fr;                        // COMPC
@@ -144,20 +141,21 @@ class FV1Emu {
       }
       pacc = before;
     }
-    this.acc = acc; this.pacc = pacc; this.lr = lr;
+    this.acc = acc; this.pacc = this.padded ? acc : pacc; this.lr = lr;
     this.run = true;
     this.wp = (wp - 1) & MASK;
-    // advance LFO phase: omega = Kf / 2^17 rad/sample
+    // advance LFO phase: omega = Kf / 2^17 rad/sample, Kf = SINn_RATE * 512 (0..511)
     for (let l = 0; l < 2; l++) {
-      this.sinPhase[l] += this.sinK[l] / 131072;
-      if (this.sinPhase[l] > 6.283185307179586) this.sinPhase[l] -= 6.283185307179586;
+      const rv = reg[2 * l], kf = rv <= 0 ? 0 : (rv >= 0.998046875 ? 511 : Math.floor(rv * 512));
+      if (kf) { sinPhase[l] += kf / 131072; if (sinPhase[l] > TWO_PI) sinPhase[l] -= TWO_PI; }
     }
     for (let u = 0; u < 2; u++) {                       // ramp LFOs: position moves by -K per sample
       const units = FV1Emu.RAMPAMP[(reg[5 + 2 * u] | 0) & 3] * 16384;
       const K = Math.round(reg[4 + 2 * u] * 32768);
       this.rampPos[u] = (((this.rampPos[u] - K) % units) + units) % units;
     }
-    return [reg[0x16], reg[0x17]];
+    const out = this.out; out[0] = reg[0x16]; out[1] = reg[0x17];
+    return out;
   }
   static toInt(a) { return Math.round(a * 8388608) & 0xffffff; }
   static fromInt(i) { i &= 0xffffff; if (i & 0x800000) i -= 0x1000000; return i / 8388608; }
