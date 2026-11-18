@@ -8,6 +8,8 @@ Wire blocks together, hear the result live through an emulator that runs the rea
 
 Open `fv1-studio.html` in Chrome or Edge (works straight from `file://`, no server, no internet).
 
+The full [user guide](docs/user-guide.md) covers every block, the looper, the chip bank and the programmer.
+
 1. **Start audio**, then turn on the live input, press **Demo riff**, load a recording, or record a loop.
 2. Drag blocks from the left, wire outputs (right dots) to inputs (left dots). Blue = audio, orange = control.
 3. On the **Chip** tab, **Store** the patch in one of the 8 slots.
